@@ -16,7 +16,6 @@ def load_problem(fname):
         c = np.loadtxt(inp)
         c = np.maximum( c, c.transpose())
         i, j = c.shape
-
         return (ls, c)
 
 def srflp_d(l, q, r, perm):
@@ -31,15 +30,12 @@ def srflp_permutation(perm, l, c):
     '''
     Vyhodnoceni permutave
     '''
-
     n = len(l)
     fit = 0
-
     for q in range(n - 1):
         for r in range(q + 1, n):
             # print('', perm[q], perm[r], c[perm[q]][perm[r]], srflp_d(l, q, r, perm))
             fit = fit + c[perm[q]][perm[r]] * srflp_d(l, q, r, perm)
-
     return fit
 
 def paral_srflp_permutation(l, c, s, best_found, lock):
@@ -60,6 +56,7 @@ def paral_srflp_permutation(l, c, s, best_found, lock):
         if val < best_found.value[0]:
             best_found.value = [val, perm]
             print(s, best_found.value[0], best_found.value[1])
+
   return best_found.value[0]
 
 '''
@@ -89,7 +86,6 @@ def run():
     output_file.write('Val:\n' + str(best_found.value[0]))
     output_file.write('Perm:\n' + " ".join(best_found.value[1]))
     output_file.close()
-
   # print(ret)
 
 run()
