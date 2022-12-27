@@ -1,7 +1,6 @@
-import itertools as it        # req. step 2
-import multiprocessing as mp  # req. step 3
+import itertools as it
+import multiprocessing as mp
 import numpy as np
-from pprint import pprint
 
 '''
 https://homel.vsb.cz/~kro080/PAI-2022/U1/
@@ -29,6 +28,10 @@ def srflp_d(l, q, r, perm):
     return length
 
 def srflp_permutation(perm, l, c):
+    '''
+    Vyhodnoceni permutave
+    '''
+
     n = len(l)
     fit = 0
 
@@ -39,29 +42,15 @@ def srflp_permutation(perm, l, c):
 
     return fit
 
-
-def evaluate_srflp_permutation(perm, l, c, best_found):
+def paral_srflp_permutation(l, c, s, best_found, lock):
   '''
-  Postupne pocita cenu permutace.
-  V pripade, ze prekroci best_found, vrati False a index prvku,
-  u ktereho to nastalo.
-  '''
-  res = srflp_permutation(perm, l,c)
-  if res >= best_found:
-    return False, res
-  return True, res
-
-def perms_srflp_permutation(l, c, s, best_found, lock):
-  '''
-  Vyhodnoti vsechny permutace, ktere zacinaji na [0, s, ..., n ].
-  Nejlepsi nalezene cesty uklada do sdilene promenne _best_found_.
-  Pouziva zamek _lock_ pro hlidani pristupu do ni.
+  Vyhodnoceni casti permutaci dle 's'. 's' je prefix [s , a ... len(c)].
+  Efektivita paralelismu je ovlivnena 'len(c)' a 'pool_size'.
   '''
   n = len(c)
-
   perm_gen_base = [a for a in range(n) if a != s]
-
   print(s, perm_gen_base)
+
   for perm_gen in it.permutations(perm_gen_base):
       perm = [s]
       perm.extend(perm_gen)
@@ -71,10 +60,13 @@ def perms_srflp_permutation(l, c, s, best_found, lock):
         if val < best_found.value[0]:
             best_found.value = [val, perm]
             print(s, best_found.value[0], best_found.value[1])
-
-
   return best_found.value[0]
 
+'''
+Hlavni funkce, ktera se stara o 
+- nacteni dat
+- nastaveni paralelizmu - manager, lock, shared_var 
+'''
 def run():
   l, c = load_problem('Y-10_t.txt')
 
@@ -82,13 +74,21 @@ def run():
   # budeme pracovat ve sdilene pameti
   with mp.Manager() as manager:
     lock = manager.Lock()
+    # max val and empty permutation
     best_found = manager.Value('d', [1000000.0, []])
-
+    splitter = list(range(0, len(c)-1))
     # spustime ve vice procesech
     with mp.Pool(processes=pool_size) as pool:
-      ret = pool.starmap(perms_srflp_permutation, zip(it.repeat(l), it.repeat(c), list(range(0, len(c)-1)), it.repeat(best_found), it.repeat(lock)))
+      # kazde vlakno v poolu se stara o cast vypoctu, rozdeleno dle seznamu 'splitter'
+      ret = pool.starmap(paral_srflp_permutation, zip(it.repeat(l), it.repeat(c), splitter, it.repeat(best_found), it.repeat(lock)))
+    # vypsani nejlepsich reseni
     print(best_found.value[0])
     print(best_found.value[1])
+    # ulozeni vysledku do souboru
+    output_file = open('1.py.res.txt', 'w')
+    output_file.write('Val:\n' + str(best_found.value[0]))
+    output_file.write('Perm:\n' + " ".join(best_found.value[1]))
+    output_file.close()
 
   # print(ret)
 
