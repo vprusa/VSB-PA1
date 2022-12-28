@@ -20,10 +20,38 @@ def load_data(filename):
     data = pd.read_csv(filename, nrows=nrows)
     return data
 
+class Pt(object):
+    '''
+    Training point
+    '''
+
+    def __init__(s, _x, _y):
+        s.x = _x
+        s.y = _y
+        s.tp_range = 10
+
+    def set(s, pt):
+        s.x = pt.x
+        s.y = pt.y
+
+
+width = 28
+height = 28
+
+def sum_at(x,y):
+
+    return
+
+def eval_mean_shift_step(pt, sum):
+
+    return Pt()
+
 def train(data):
     ## Paral.: coudl be also with batch evaluation (and then committee or merging model)
     pprint(data)
     ## Paral.: sum numbers per class (10 classes -> effective 2 threads)
+    # for each class
+    # sum all numbers
     classes_cnt=10
     sums = [None for x in range(0,classes_cnt)] # define array of sums
     for i in range(0, classes_cnt-1):
@@ -44,14 +72,22 @@ def train(data):
         pprint(sum)
         sums.append(sum)
     pprint(sums)
-    # for each class
-    # sum all numbers
     ## Paral.: sum numbers per class (10 classes -> effective 2 threads)
     # for each summed class
-    ## Paral.: per traning points (4 training points -> effective 2,4 threads)
-    # gen N training points (random or edges of image?)
-    # for each training point t
-    # run Mean Shift N times for t and thus move it to the nearest center of mass
+    training_pts_cnt_per_class = 1
+    iter_cnt = 2
+    for sum in sums:
+        ## Paral.: per training points (4 training points -> effective 2,4 threads)
+        # gen N training points (random or edges of image?)
+        # for each training point t
+        training_pts = [Pt(0,0) for x in range(0,training_pts_cnt_per_class)]
+        for pt_i in range(0, len(training_pts_cnt_per_class)-1):
+            pt = training_pts[pt_i]
+            for it_i in range(0, iter_cnt-1):
+                new_pt = eval_mean_shift_step(pt, sum)
+                pt.set(new_pt) # just for clarification of what is going on (eval_mean_shift_step without side-effects)
+
+            # run Mean Shift N times for t and thus move it to the nearest center of mass
 
 class TrainedModel(object):
     '''
