@@ -1,5 +1,8 @@
 import itertools as it
+import math
 import multiprocessing as mp
+from random import randint
+
 import numpy as np
 from pprint import pprint
 import csv
@@ -30,7 +33,6 @@ class Pt(object):
     def __init__(s, _x, _y):
         s.x = _x
         s.y = _y
-        s.tp_range = 10
         s.size = np.sqrt(s.x*s.x + s.y*s.y)
 
     def set(s, pt):
@@ -58,9 +60,9 @@ def convert_sum2pts(sum):
     ... and I am too lazy to deal with that, because this project should test
     Parallel implementation of MeanShift alg. and not Clustering
     '''
-    ar = np.array(sum).reshape(28, 28)
+    ar = np.array(sum).reshape(width, height)
     nr = np.unravel_index(ar.argmax(), ar.shape)
-    threshold = nr/2.0
+    threshold = ar[nr[0]][nr[1]]/2.0
     pts = list()
     for x_i in range(0,width-1):
         for y_i in range(0, height - 1):
@@ -76,20 +78,17 @@ def get_in_range(pt, sum):
     for i in range(0, len(sum)):
         sum_at()
 
-def eval_mean_shift_step(Apt, pts):
-    # np.array(sum).reshape(28,28)
-    # centers = [pt.x, pt.y]
-    # X, _ = make_blobs(n_samples=950, centers=centers, cluster_std=0.89)
-    # ms = MeanShift()
-    # ms.fit(np.array(sum).reshape(28,28))
-    # lets cheat ... TODO do not cheat
-    # if sum is None:
-    #     return pt
-    # ar = np.array(sum).reshape(28, 28)
-    # nr = np.unravel_index(ar.argmax(), ar.shape)
-    # pt.x = nr[0]
-    # pt.y = nr[1]
+def round_pt_up(pt):
+    x = 0 if np.isnan(pt.x) else math.ceil(pt.x)
+    y = 0 if np.isnan(pt.y) else math.ceil(pt.y)
+    # y = math.ceil(pt.y)
+    x = width-1 if (x >= width) else x
+    y = height-1 if (y >= height) else y
+    x = 0 if (x < 0) else x
+    y = 0 if (y < 0) else y
+    return Pt(x, y)
 
+def eval_mean_shift_step(Apt, pts):
     '''
     Requierments: use Gauss kernel
     https://stats.stackexchange.com/questions/61743/understanding-the-mean-shift-algorithm-with-gaussian-kernel
@@ -98,16 +97,16 @@ def eval_mean_shift_step(Apt, pts):
     '''
 
     def K_a(a_vec):
-        ro = 10
+        ro = 1
         n = a_vec.ndim
         a_len = a_vec.size
-        top = np.power(np.euler_gamma, - (np.power(a_len, 2)/(2.0* np.power(ro,2))))
-        bottom = np.power(np.sqrt(np.PI * 2.0) * ro, n)
+        top = np.power(np.euler_gamma, - (np.power(a_len, 2)/(2.0 * np.power(ro, 2))))
+        bottom = np.power(np.sqrt(np.pi * 2.0) * ro, n)
         K_a_res = top / bottom
         return K_a_res
 
     def single_K(xi, x):
-        K_input = Pt(xi[0] - x[0], xi[1] - x[1])
+        K_input = Pt(xi.x - x.x, xi.y - x.y)
         K_res = K_a(K_input)
         return K_res
 
@@ -116,46 +115,55 @@ def eval_mean_shift_step(Apt, pts):
     bottom_sum = 0
     for pti in pts:
         single_K_val = single_K(pti, Apt)
-        top_sum_x = single_K_val * Apt.x
-        top_sum_y = single_K_val * Apt.y
+        top_sum_x = top_sum_x + (single_K_val * pti.x)
+        top_sum_y = top_sum_x + (single_K_val * pti.y)
         bottom_sum = bottom_sum + single_K_val
 
-    new_Apt = Pt(top_sum_x/bottom_sum, top_sum_y/bottom_sum)
+    new_Apt = round_pt_up(Pt(top_sum_x/bottom_sum, top_sum_y/bottom_sum))
     return new_Apt
 
 def train(data):
     ## Paral.: coudl be also with batch evaluation (and then committee or merging model)
-    pprint(data)
+    pprint("data")
+    # pprint(data)
     ## Paral.: sum numbers per class (10 classes -> effective 2 threads)
     # for each class
     # sum all numbers
     classes_cnt=10
     sums = prepare_training_data(classes_cnt, data)
-    training_pts_cnt_per_class = 1
-    iter_cnt = 2
-    training_pts_per_class = dict()
-
-    train_pts(iter_cnt, sums, training_pts_cnt_per_class, training_pts_per_class)
+    training_pts_cnt_per_class = 4
+    iter_cnt = 50
+    training_pts_per_class = train_pts(iter_cnt, sums, training_pts_cnt_per_class)
     return training_pts_per_class
 
 
-def train_pts(iter_cnt, sums, training_pts_cnt_per_class, training_pts_per_class):
+def train_pts(iter_cnt, sums, training_pts_cnt_per_class):
+    training_pts_per_class = dict()
     ## Paral.: sum numbers per class (10 classes -> effective 2 threads)
     # for each summed class
     for sum_i in range(0, len(sums)):
         sum = sums[sum_i]
+        if sum is None:
+            continue
         ## Paral.: per training points (4 training points -> effective 2,4 threads)
         # gen N training points (random or edges of image?)
         # for each training point t
-        training_pts = [Pt(0, 0) for x in range(0, training_pts_cnt_per_class)]
+        # training_pts = [Pt(0, 0) for x in range(0, training_pts_cnt_per_class)]
+        # training_pts = [Pt(randint(0, width-1), randint(0, height-1)) for x in range(0, training_pts_cnt_per_class)]
+        # so for testing purposes lets generate points in corners ...
+        training_pts = [Pt(0, 0), Pt(width-1, 0), Pt(0, height-1), Pt(width-1, height-1)]
         for pt_i in range(0, training_pts_cnt_per_class):
             pt = training_pts[pt_i]
-            for it_i in range(0, iter_cnt - 1):
+            old_pt = pt
+            for it_i in range(0, iter_cnt):
                 # run Mean Shift N times for t and thus move it to the nearest center of mass
-                new_pt = eval_mean_shift_step(pt, convert_sum2pts(sum))
-                pt.x = new_pt.x
-                pt.y = new_pt.y
+                new_pt = eval_mean_shift_step(old_pt, convert_sum2pts(sum))
+                old_pt = new_pt
+            pt.x = new_pt.x
+            pt.y = new_pt.y
+            pt.size = new_pt.size
         training_pts_per_class[sum_i] = training_pts
+    return training_pts_per_class
 
 
 def prepare_training_data(classes_cnt, data):
@@ -176,11 +184,11 @@ def prepare_training_data(classes_cnt, data):
                 for ii in range(1, len(row_data) - 1):
                     sums[sum_i][ii] = sums[sum_i][ii] + row_data[ii]
 
-        pprint(sum)
-        sums[i] = sum
-    pprint(sums)
+        pprint(i)
+        # pprint(sum)
+        # sums[i] = sum
+    # pprint(sums)
     return sums
-
 
 class TrainedModel(object):
     '''
@@ -189,33 +197,53 @@ class TrainedModel(object):
     training_pts = [[]]
 
 def eval_model(model, test_data):
+    for pt_i in model.keys():
+        # pprint(model[pt_i])
+        pts = model[pt_i]
+        print("i:", pt_i)
+        for pt in pts:
+            # pprint(pt.x, pt.y, pt.size)
+            print("    ", pt.x, pt.y, pt.size)
+            # pprint(pt)
 
-    data = dict()
+    data = list()
     for index, row in test_data.iterrows():
         row_data = list(row.copy().array)
-        data[row_data[0]] = row_data[1:]
+        data.append([row_data[0], row_data[1:]])
 
     res = dict()
-    for data_i in range(0, len(data)):
+    # for data_i in range(0, len(model)-1):
+    for data_i in range(0, len(data) - 1):
         best_found = 0
         best_found_i = None
-        if data_i not in data.keys():
-            continue
-        img1 = data[data_i]
-        img = np.array(img1).reshape(28, 28)
+        # if data_i not in data.keys():
+        #     continue
+        img1 = data[data_i][1]
+        label = data[data_i][0]
+        img = np.array(img1).reshape(width, height)
         for m_i in range(0, len(model)):
-            pt = model[m_i][0]
-            if img[pt.x][pt.y] > best_found:
-                best_found = img[pt.x][pt.y]
-                best_found_i = m_i
-            res[data_i] = best_found_i
+            if m_i not in model.keys():
+                continue
+            best_found_pt_ii = list()
+            for pt_i in range(0, len(model[m_i])):
+                pt = model[m_i][pt_i]
+                val = list(img)[pt.x][pt.y]
+                if val >= best_found:
+                    best_found_pt_ii.append([pt, val, m_i, pt_i])
+                    # best_found = val
+                    # best_found_i = m_i
+            best_found_pt_ii = sorted(best_found_pt_ii, key=lambda bf: -bf[1])
+            if len(best_found_pt_ii) > 0 and best_found_pt_ii[0][1] >= best_found:
+                best_found_i = best_found_pt_ii[0][2]
+                best_found = best_found_pt_ii[0][1]
+        res[data_i] = [label, best_found_i]
 
     return res
 
 def run():
-    data = load_data('mnist_train.csv')
+    data = load_data('mnist/mnist_train.csv')
     model = train(data)
-    test_data = load_data('mnist_test.csv')
+    test_data = load_data('mnist/mnist_test.csv')
     res = eval_model(model, test_data)
     pprint(res)
 run()
