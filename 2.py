@@ -76,9 +76,36 @@ def train(data):
     # for each class
     # sum all numbers
     classes_cnt=10
+    sums = prepare_training_data(classes_cnt, data)
+    training_pts_cnt_per_class = 1
+    iter_cnt = 2
+    training_pts_per_class = dict()
+
+    train_pts(iter_cnt, sums, training_pts_cnt_per_class, training_pts_per_class)
+    return training_pts_per_class
+
+
+def train_pts(iter_cnt, sums, training_pts_cnt_per_class, training_pts_per_class):
+    ## Paral.: sum numbers per class (10 classes -> effective 2 threads)
+    # for each summed class
+    for sum_i in range(0, len(sums)):
+        sum = sums[sum_i]
+        ## Paral.: per training points (4 training points -> effective 2,4 threads)
+        # gen N training points (random or edges of image?)
+        # for each training point t
+        training_pts = [Pt(0, 0) for x in range(0, training_pts_cnt_per_class)]
+        for pt_i in range(0, training_pts_cnt_per_class):
+            pt = training_pts[pt_i]
+            for it_i in range(0, iter_cnt - 1):
+                # run Mean Shift N times for t and thus move it to the nearest center of mass
+                eval_mean_shift_step(pt, sum)
+        training_pts_per_class[sum_i] = training_pts
+
+
+def prepare_training_data(classes_cnt, data):
     # sums = [None for x in range(0, classes_cnt)] # define array of sums
-    sums = dict() # define array of sums
-    for i in range(0, classes_cnt-1):
+    sums = dict()  # define array of sums
+    for i in range(0, classes_cnt - 1):
         sum = None
         for index, row in data.iterrows():
             row_data = list(row.array)
@@ -90,31 +117,13 @@ def train(data):
             else:
                 row_data = list(row.array)
                 sum_i = row_data[0]
-                for ii in range(1, len(row_data)-1):
+                for ii in range(1, len(row_data) - 1):
                     sums[sum_i][ii] = sums[sum_i][ii] + row_data[ii]
 
         pprint(sum)
         sums[i] = sum
     pprint(sums)
-    ## Paral.: sum numbers per class (10 classes -> effective 2 threads)
-    # for each summed class
-    training_pts_cnt_per_class = 1
-    iter_cnt = 2
-    training_pts_per_class = dict()
-    for sum_i in range(0, len(sums)):
-        sum = sums[sum_i]
-        ## Paral.: per training points (4 training points -> effective 2,4 threads)
-        # gen N training points (random or edges of image?)
-        # for each training point t
-        training_pts = [Pt(0,0) for x in range(0,training_pts_cnt_per_class)]
-        for pt_i in range(0, training_pts_cnt_per_class):
-            pt = training_pts[pt_i]
-            for it_i in range(0, iter_cnt-1):
-                # run Mean Shift N times for t and thus move it to the nearest center of mass
-                eval_mean_shift_step(pt, sum)
-        training_pts_per_class[sum_i] = training_pts
-
-    return training_pts_per_class
+    return sums
 
 
 class TrainedModel(object):
@@ -124,38 +133,6 @@ class TrainedModel(object):
     training_pts = [[]]
 
 def eval_model(model, test_data):
-    # return classification of test data
-    # data = dict()
-    # for index, row in test_data.iterrows():
-    #     row_data = list(row.copy().array)
-    #     data[row_data[0]] = row_data[1:]
-    #
-    # res = dict()
-    # for m_i in range(0,len(model):
-    #     m = model[m_i]
-    #     res = m[0]
-    #
-    # data = dict()
-    # for index, row in test_data.iterrows():
-    #     row_data = list(row.copy().array)
-    # data[row_data[0]] = row_data[1:]
-    #
-    # res = dict()
-    # for data_i in range(0, len(data)):
-    #     best_found = 100000000
-    # best_found_i
-    # res_tmp = dict()
-    # img1 = data[data_i]
-    # img = np.array(img1).reshape(28, 28)
-    # for m_i in range(0, len(model)):
-    #     pt = model[m_i]
-    #     if img
-    # res_tmp[m_i] =
-    #
-    # res = dict()
-    # for m_i in range(0, len(model)):
-    #     m = model[m_i]
-    # res[m_i] = m[0]
 
     data = dict()
     for index, row in test_data.iterrows():
