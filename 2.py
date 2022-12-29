@@ -50,6 +50,25 @@ shift_step_n = 2
 from sklearn.cluster import MeanShift
 from sklearn.datasets import make_blobs
 
+def convert_sum2pts(sum):
+    '''
+    Because IDK how to easily to get Points (Vectors) from MNIST I am converting summed data per class to points if the
+    value is above given threshold,
+    The other way would be to recalc for each MNIST row Feature Vector...
+    ... and I am too lazy to deal with that, because this project should test
+    Parallel implementation of MeanShift alg. and not Clustering
+    '''
+    ar = np.array(sum).reshape(28, 28)
+    nr = np.unravel_index(ar.argmax(), ar.shape)
+    threshold = nr/2.0
+    pts = list()
+    for x_i in range(0,width-1):
+        for y_i in range(0, height - 1):
+            if ar[x_i][y_i] > threshold:
+                pts.append(Pt(x_i, y_i))
+    return pts
+
+
 def eval_mean_shift_step_K(pt):
     return Pt()
 
@@ -57,7 +76,7 @@ def get_in_range(pt, sum):
     for i in range(0, len(sum)):
         sum_at()
 
-def eval_mean_shift_step(pt, sum):
+def eval_mean_shift_step(Apt, pts):
     # np.array(sum).reshape(28,28)
     # centers = [pt.x, pt.y]
     # X, _ = make_blobs(n_samples=950, centers=centers, cluster_std=0.89)
@@ -87,14 +106,22 @@ def eval_mean_shift_step(pt, sum):
         K_a_res = top / bottom
         return K_a_res
 
-    def sum_K(xi, x, withMultXi = False):
-        K_input = Pt(xi[0] - x[0],xi[1] - x[1])
+    def single_K(xi, x):
+        K_input = Pt(xi[0] - x[0], xi[1] - x[1])
         K_res = K_a(K_input)
-        if withMultXi:
-            Pt
         return K_res
 
-    return pt
+    top_sum_x = 0
+    top_sum_y = 0
+    bottom_sum = 0
+    for pti in pts:
+        single_K_val = single_K(pti, Apt)
+        top_sum_x = single_K_val * Apt.x
+        top_sum_y = single_K_val * Apt.y
+        bottom_sum = bottom_sum + single_K_val
+
+    new_Apt = Pt(top_sum_x/bottom_sum, top_sum_y/bottom_sum)
+    return new_Apt
 
 def train(data):
     ## Paral.: coudl be also with batch evaluation (and then committee or merging model)
@@ -125,7 +152,9 @@ def train_pts(iter_cnt, sums, training_pts_cnt_per_class, training_pts_per_class
             pt = training_pts[pt_i]
             for it_i in range(0, iter_cnt - 1):
                 # run Mean Shift N times for t and thus move it to the nearest center of mass
-                eval_mean_shift_step(pt, sum)
+                new_pt = eval_mean_shift_step(pt, convert_sum2pts(sum))
+                pt.x = new_pt.x
+                pt.y = new_pt.y
         training_pts_per_class[sum_i] = training_pts
 
 
