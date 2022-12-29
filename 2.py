@@ -25,10 +25,13 @@ class Pt(object):
     Training point
     '''
 
+    ndim = 2
+
     def __init__(s, _x, _y):
         s.x = _x
         s.y = _y
         s.tp_range = 10
+        s.size = np.sqrt(s.x*s.x + s.y*s.y)
 
     def set(s, pt):
         s.x = pt.x
@@ -61,12 +64,36 @@ def eval_mean_shift_step(pt, sum):
     # ms = MeanShift()
     # ms.fit(np.array(sum).reshape(28,28))
     # lets cheat ... TODO do not cheat
-    if sum is None:
-        return pt
-    ar = np.array(sum).reshape(28, 28)
-    nr = np.unravel_index(ar.argmax(), ar.shape)
-    pt.x = nr[0]
-    pt.y = nr[1]
+    # if sum is None:
+    #     return pt
+    # ar = np.array(sum).reshape(28, 28)
+    # nr = np.unravel_index(ar.argmax(), ar.shape)
+    # pt.x = nr[0]
+    # pt.y = nr[1]
+
+    '''
+    Requierments: use Gauss kernel
+    https://stats.stackexchange.com/questions/61743/understanding-the-mean-shift-algorithm-with-gaussian-kernel
+
+    In our case is searched space 2D 28x28 PIXELS ...
+    '''
+
+    def K_a(a_vec):
+        ro = 10
+        n = a_vec.ndim
+        a_len = a_vec.size
+        top = np.power(np.euler_gamma, - (np.power(a_len, 2)/(2.0* np.power(ro,2))))
+        bottom = np.power(np.sqrt(np.PI * 2.0) * ro, n)
+        K_a_res = top / bottom
+        return K_a_res
+
+    def sum_K(xi, x, withMultXi = False):
+        K_input = Pt(xi[0] - x[0],xi[1] - x[1])
+        K_res = K_a(K_input)
+        if withMultXi:
+            Pt
+        return K_res
+
     return pt
 
 def train(data):
