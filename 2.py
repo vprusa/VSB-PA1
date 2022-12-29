@@ -15,21 +15,30 @@ https://youtrack.jetbrains.com/issue/PY-52273/Debugger-multiprocessing-hangs-pyc
 https://youtrack.jetbrains.com/issue/PY-37366/Debugging-with-multiprocessing-managers-no-longer-working-after-update-to-2019.2-was-fine-in-2019.1#focus=Comments-27-4690501.0-0
 '''
 
+
+width = 28
+height = 28
+
+threshold_const = 1.5
+threshold_multiplier_const = None
+classes_cnt = 10
+training_pts_cnt_per_class = 20
+iter_cnt = 50
+data_cnt = 1000
+
 def load_data(filename):
     # csv_reader = csv.reader(filename)
     # print(csv_reader)
     # return csv_reader
-    nrows = 200
+    nrows = data_cnt
     data = pd.read_csv(filename, nrows=nrows)
     return data
 
 class Pt(object):
     '''
-    Training point
+    Point
     '''
-
     ndim = 2
-
     def __init__(s, _x, _y):
         s.x = _x
         s.y = _y
@@ -39,18 +48,6 @@ class Pt(object):
         s.x = pt.x
         s.y = pt.y
 
-
-width = 28
-height = 28
-
-def sum_at(x,y):
-    return
-
-shift_step_ro = 1
-shift_step_n = 2
-
-from sklearn.cluster import MeanShift
-from sklearn.datasets import make_blobs
 
 def convert_sum2pts(sum):
     '''
@@ -62,21 +59,22 @@ def convert_sum2pts(sum):
     '''
     ar = np.array(sum).reshape(width, height)
     nr = np.unravel_index(ar.argmax(), ar.shape)
-    threshold = ar[nr[0]][nr[1]]/2.0
+    threshold = ar[nr[0]][nr[1]]/threshold_const
     pts = list()
-    for x_i in range(0,width-1):
+    for x_i in range(0, width-1):
         for y_i in range(0, height - 1):
             if ar[x_i][y_i] > threshold:
-                pts.append(Pt(x_i, y_i))
+                if threshold_multiplier_const is None:
+                    pts.append(Pt(x_i, y_i))
+                # else:
+                #     '''
+                #     for the fun out of it I have decided to add another feature
+                #     that is point count multiplication
+                #     '''
+                #     cnt = ar[x_i][y_i] % threshold_multiplier_const
+                #     for i in range(0, cnt):
+                #         pts.append(Pt(x_i, y_i))
     return pts
-
-
-def eval_mean_shift_step_K(pt):
-    return Pt()
-
-def get_in_range(pt, sum):
-    for i in range(0, len(sum)):
-        sum_at()
 
 def round_pt_up(pt):
     x = 0 if np.isnan(pt.x) else math.ceil(pt.x)
@@ -129,11 +127,10 @@ def train(data):
     ## Paral.: sum numbers per class (10 classes -> effective 2 threads)
     # for each class
     # sum all numbers
-    classes_cnt=10
     sums = prepare_training_data(classes_cnt, data)
-    training_pts_cnt_per_class = 4
-    iter_cnt = 50
+    print("training...")
     training_pts_per_class = train_pts(iter_cnt, sums, training_pts_cnt_per_class)
+    print("trained...")
     return training_pts_per_class
 
 
@@ -142,6 +139,7 @@ def train_pts(iter_cnt, sums, training_pts_cnt_per_class):
     ## Paral.: sum numbers per class (10 classes -> effective 2 threads)
     # for each summed class
     for sum_i in range(0, len(sums)):
+        print("sum_i: ", sum_i)
         sum = sums[sum_i]
         if sum is None:
             continue
@@ -149,10 +147,12 @@ def train_pts(iter_cnt, sums, training_pts_cnt_per_class):
         # gen N training points (random or edges of image?)
         # for each training point t
         # training_pts = [Pt(0, 0) for x in range(0, training_pts_cnt_per_class)]
-        # training_pts = [Pt(randint(0, width-1), randint(0, height-1)) for x in range(0, training_pts_cnt_per_class)]
+        training_pts = [Pt(randint(0, width-1), randint(0, height-1)) for x in range(0, training_pts_cnt_per_class)]
         # so for testing purposes lets generate points in corners ...
-        training_pts = [Pt(0, 0), Pt(width-1, 0), Pt(0, height-1), Pt(width-1, height-1)]
+        # training_pts = [Pt(0, 0), Pt(width-1, 0), Pt(0, height-1), Pt(width-1, height-1)]
         for pt_i in range(0, training_pts_cnt_per_class):
+            if pt_i % (training_pts_cnt_per_class / 10) == 0:
+                print("Pt: ", pt_i," of ", training_pts_cnt_per_class)
             pt = training_pts[pt_i]
             old_pt = pt
             for it_i in range(0, iter_cnt):
@@ -213,7 +213,7 @@ def eval_model(model, test_data):
 
     res = dict()
     # for data_i in range(0, len(model)-1):
-    for data_i in range(0, len(data) - 1):
+    for data_i in range(0, len(data)):
         best_found = 0
         best_found_i = None
         # if data_i not in data.keys():
@@ -240,10 +240,21 @@ def eval_model(model, test_data):
 
     return res
 
+def eval_res(res):
+    pprint(res)
+    ok = 0
+    for k in res.keys():
+        r = res[k]
+        if r[0] == r[1]:
+            ok = ok + 1
+
+    print("ok: " + str(ok) + " of " + str(len(res)) + ": " + str(ok/len(res)))
+
 def run():
     data = load_data('mnist/mnist_train.csv')
     model = train(data)
     test_data = load_data('mnist/mnist_test.csv')
     res = eval_model(model, test_data)
-    pprint(res)
+    eval_res(res)
+
 run()
