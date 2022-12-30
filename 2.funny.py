@@ -55,9 +55,6 @@ threshold_multiplier_const = None  # not used anymore
 
 def load_data(filename):
     print("Load file at: ", mnist_data_file)
-    # csv_reader = csv.reader(filename)
-    # print(csv_reader)
-    # return csv_reader
     nrows = data_cnt
     data = pd.read_csv(filename, nrows=nrows)
     return data
@@ -167,18 +164,15 @@ def worker(pt_k, pt_i, part_sums, lock):
         top_sum_x = part_sums.value[0]
         top_sum_y = part_sums.value[1]
         bottom_sum = part_sums.value[2]
-        # part_sums.value[0] = top_sum_x + (single_K_val * pt_i.x)
-        # part_sums.value[1] = top_sum_y + (single_K_val * pt_i.y)
-        # part_sums.value[2] = bottom_sum + single_K_val
         part_sums.value = [ top_sum_x + (single_K_val * pt_i.x), top_sum_y + (single_K_val * pt_i.y), bottom_sum + single_K_val]
 
     return part_sums.value
 
 def train(data):
-    ## Paral.: coudl be also with batch evaluation (and then committee or merging model)
+    ## Possible paral.: coudl be also with batch evaluation (and then committee or merging model)
     pprint("Loading data...")
     # pprint(data)
-    ## Paral.: sum numbers per class (10 classes -> effective 2 threads)
+    ## Possible paral.: sum numbers per class (10 classes -> effective 2 threads)
     # for each class
     # sum all numbers
     sums = prepare_training_data(classes_cnt, data)
@@ -190,14 +184,14 @@ def train(data):
 
 def train_pts(iter_cnt, sums, training_pts_cnt_per_class):
     training_pts_per_class = dict()
-    ## Paral.: sum numbers per class (10 classes -> effective 2 threads)
+    ## Possible paral.: sum numbers per class (10 classes -> effective 2 threads)
     # for each summed class
     for sum_i in range(0, len(sums)):
         print("sum_i: ", sum_i)
         sum = sums[sum_i]
         if sum is None:
             continue
-        ## Paral.: per training points (4 training points -> effective 2,4 threads)
+        ## Possible paral.: per training points (4 training points -> effective 2,4 threads)
         # gen N training points (random or edges of image?)
         # for each training point t
         # training_pts = [Pt(0, 0) for x in range(0, training_pts_cnt_per_class)]
