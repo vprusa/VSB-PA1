@@ -1,11 +1,10 @@
 import itertools as it
 import math
 import multiprocessing as mp
+from pprint import pprint
 from random import randint
 
 import numpy as np
-from pprint import pprint
-import csv
 import pandas as pd
 
 '''
@@ -13,20 +12,49 @@ https://homel.vsb.cz/~kro080/PAI-2022/U2/
 
 https://youtrack.jetbrains.com/issue/PY-52273/Debugger-multiprocessing-hangs-pycharm-2021.3
 https://youtrack.jetbrains.com/issue/PY-37366/Debugging-with-multiprocessing-managers-no-longer-working-after-update-to-2019.2-was-fine-in-2019.1#focus=Comments-27-4690501.0-0
+
+Popis reseni:
+Protoze nebylo specifikovano jak zpracovat data, ktera budeme do MeanShift podavat,
+tak jsem sepsal program, ktery:
+- nacte mnist
+- mergne vsechny obrazky danych labelu
+- vysledny 2D prostor 28x28 profiltruje pres prah (threshold)
+- vysledny profiltrovany 2D prostor prevede na body takove, ze pokud je hodnota v 2D pixelech nenulova, 
+    tak ji vezme jako bod a prida ji do seznamu bodu
+- tyto body reprezentuji vlastnosti (features)
+- nad temito body je proveden MeanShift
+
+- Paralelismus resim v ramci MeanShift algoritmu v iteraci nad jednotlivymi body pro vypocet Gausova kernelu
+
+Pozn.:
+V zadani bylo, ze nemusime mit funkcni klasifikaci a s ohledem na implementaci jsem se ji dotkl jen okrajove,
+  se znamym predpokladem poctu trid (ktery se v samotnem MeanShift nijak nepouziva).
+Pokud by bylo receno, ze z MNIST mame nejak jinak extrahovat features vektory, tak to udelam tak... 
+Nejblize lepsi extrakci byl projekt:
+http://deciphertoknow.com/mnist-k-means-clustering/
+Nicmene v jeho datove sade mnist uz 'feature vector' je.
+
 '''
 
+mnist_data_file = 'mnist/mnist_train.csv'
+mnist_test_file = 'mnist/mnist_test.csv'
+
+pool_size_l1 = 4
+pool_size_l2 = 8
 
 width = 28
 height = 28
 
 threshold_const = 1.5
-threshold_multiplier_const = None
 classes_cnt = 10
 training_pts_cnt_per_class = 20
 iter_cnt = 50
-data_cnt = 1000
+data_cnt = 500
+
+threshold_multiplier_const = None  # not used anymore
 
 def load_data(filename):
+    print("Load file at: ", mnist_data_file)
     # csv_reader = csv.reader(filename)
     # print(csv_reader)
     # return csv_reader
@@ -86,6 +114,20 @@ def round_pt_up(pt):
     y = 0 if (y < 0) else y
     return Pt(x, y)
 
+def K_a(a_vec):
+    ro = 1
+    n = a_vec.ndim
+    a_len = a_vec.size
+    top = np.power(np.euler_gamma, - (np.power(a_len, 2)/(2.0 * np.power(ro, 2))))
+    bottom = np.power(np.sqrt(np.pi * 2.0) * ro, n)
+    K_a_res = top / bottom
+    return K_a_res
+
+def single_K(xi, x):
+    K_input = Pt(xi.x - x.x, xi.y - x.y)
+    K_res = K_a(K_input)
+    return K_res
+
 def eval_mean_shift_step(Apt, pts):
     '''
     Requierments: use Gauss kernel
@@ -94,43 +136,55 @@ def eval_mean_shift_step(Apt, pts):
     In our case is searched space 2D 28x28 PIXELS ...
     '''
 
-    def K_a(a_vec):
-        ro = 1
-        n = a_vec.ndim
-        a_len = a_vec.size
-        top = np.power(np.euler_gamma, - (np.power(a_len, 2)/(2.0 * np.power(ro, 2))))
-        bottom = np.power(np.sqrt(np.pi * 2.0) * ro, n)
-        K_a_res = top / bottom
-        return K_a_res
+    ret = None
 
-    def single_K(xi, x):
-        K_input = Pt(xi.x - x.x, xi.y - x.y)
-        K_res = K_a(K_input)
-        return K_res
+    # budeme pracovat ve sdilene pameti
+    with mp.Manager() as manager:
+        lock = manager.Lock()
+        # max val and empty permutation
+        triplet = manager.Value('d', [0.0, 0.0, 0.0])
+        # spustime ve vice procesech
+        with mp.Pool(processes=pool_size_l2) as pool:
+            # kazde vlakno v poolu se stara o cast vypoctu, rozdeleno dle seznamu 'splitter'
+            ret = pool.starmap(worker, zip(it.repeat(Apt), pts, it.repeat(triplet), it.repeat(lock)))
 
-    top_sum_x = 0
-    top_sum_y = 0
-    bottom_sum = 0
-    for pti in pts:
-        single_K_val = single_K(pti, Apt)
-        top_sum_x = top_sum_x + (single_K_val * pti.x)
-        top_sum_y = top_sum_x + (single_K_val * pti.y)
-        bottom_sum = bottom_sum + single_K_val
+    def sum_i(ar, idx):
+        sum_m = 0
+        for r in ar:
+            sum_m = sum_m + r[idx]
+        return sum_m
+
+    top_sum_x = sum_i(ret,0)
+    top_sum_y = sum_i(ret,1)
+    bottom_sum = sum_i(ret,2)
 
     new_Apt = round_pt_up(Pt(top_sum_x/bottom_sum, top_sum_y/bottom_sum))
     return new_Apt
 
+def worker(pt_k, pt_i, part_sums, lock):
+    single_K_val = single_K(pt_i, pt_k)
+    with lock:
+        top_sum_x = part_sums.value[0]
+        top_sum_y = part_sums.value[1]
+        bottom_sum = part_sums.value[2]
+        # part_sums.value[0] = top_sum_x + (single_K_val * pt_i.x)
+        # part_sums.value[1] = top_sum_y + (single_K_val * pt_i.y)
+        # part_sums.value[2] = bottom_sum + single_K_val
+        part_sums.value = [ top_sum_x + (single_K_val * pt_i.x), top_sum_y + (single_K_val * pt_i.y), bottom_sum + single_K_val]
+
+    return part_sums.value
+
 def train(data):
     ## Paral.: coudl be also with batch evaluation (and then committee or merging model)
-    pprint("data")
+    pprint("Loading data...")
     # pprint(data)
     ## Paral.: sum numbers per class (10 classes -> effective 2 threads)
     # for each class
     # sum all numbers
     sums = prepare_training_data(classes_cnt, data)
-    print("training...")
+    print("Training Pts...")
     training_pts_per_class = train_pts(iter_cnt, sums, training_pts_cnt_per_class)
-    print("trained...")
+    print("Trained...")
     return training_pts_per_class
 
 
@@ -241,6 +295,7 @@ def eval_model(model, test_data):
     return res
 
 def eval_res(res):
+    print("eval_res:")
     pprint(res)
     ok = 0
     for k in res.keys():
@@ -251,9 +306,9 @@ def eval_res(res):
     print("ok: " + str(ok) + " of " + str(len(res)) + ": " + str(ok/len(res)))
 
 def run():
-    data = load_data('mnist/mnist_train.csv')
+    data = load_data(mnist_data_file)
     model = train(data)
-    test_data = load_data('mnist/mnist_test.csv')
+    test_data = load_data(mnist_test_file)
     res = eval_model(model, test_data)
     eval_res(res)
 
