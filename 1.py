@@ -9,6 +9,8 @@ https://youtrack.jetbrains.com/issue/PY-52273/Debugger-multiprocessing-hangs-pyc
 https://youtrack.jetbrains.com/issue/PY-37366/Debugging-with-multiprocessing-managers-no-longer-working-after-update-to-2019.2-was-fine-in-2019.1#focus=Comments-27-4690501.0-0
 '''
 
+max_val = 1000000.0
+
 def load_problem(fname):
     with open(fname) as inp:
         dim = int(inp.readline())
@@ -26,7 +28,7 @@ def srflp_d(l, q, r, perm):
 
     return length
 
-def srflp_permutation(perm, l, c):
+def srflp_permutation(perm, l, c, cur_best_solution):
     '''
     Vyhodnoceni permutave
     '''
@@ -36,7 +38,9 @@ def srflp_permutation(perm, l, c):
         for r in range(q + 1, n):
             # print('', perm[q], perm[r], c[perm[q]][perm[r]], srflp_d(l, q, r, perm))
             fit = fit + c[perm[q]][perm[r]] * srflp_d(l, q, r, perm)
-    return fit
+            if cur_best_solution < fit:
+                 return [True, fit, q, perm[q], r, perm[r]]
+    return [False, fit]
 
 def paral_srflp_permutation(l, c, s, best_found, lock):
   '''
@@ -47,11 +51,31 @@ def paral_srflp_permutation(l, c, s, best_found, lock):
   perm_gen_base = [a for a in range(n) if a != s]
   print(s, perm_gen_base)
 
+  skip = False
+  index_to_skip = -1
+  index_val_to_skip = -1
   for perm_gen in it.permutations(perm_gen_base):
       perm = [s]
       perm.extend(perm_gen)
 
-      val = srflp_permutation(perm, l, c)
+      if index_to_skip != -1 and perm[index_to_skip] == index_val_to_skip:
+          continue
+      cur_best_solution = max_val
+
+      with lock:
+          cur_best_solution = best_found.value[0]
+
+      vals = srflp_permutation(perm, l, c, cur_best_solution)
+      skip = vals[0]
+      val = vals[1]
+      if skip:
+          index_to_skip = vals[2]
+          index_val_to_skip = vals[3]
+          continue
+      else:
+          index_to_skip = -1
+          index_val_to_skip = -1
+
       with lock:
         if val < best_found.value[0]:
             best_found.value = [val, perm]
@@ -72,7 +96,7 @@ def run():
   with mp.Manager() as manager:
     lock = manager.Lock()
     # max val and empty permutation
-    best_found = manager.Value('d', [1000000.0, []])
+    best_found = manager.Value('d', [max_val, []])
     splitter = list(range(0, len(c)-1))
     # spustime ve vice procesech
     with mp.Pool(processes=pool_size) as pool:

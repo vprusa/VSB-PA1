@@ -164,7 +164,7 @@ def worker(pt_k, pt_i, part_sums, lock):
         top_sum_x = part_sums.value[0]
         top_sum_y = part_sums.value[1]
         bottom_sum = part_sums.value[2]
-        part_sums.value = [ top_sum_x + (single_K_val * pt_i.x), top_sum_y + (single_K_val * pt_i.y), bottom_sum + single_K_val]
+        part_sums.value = [top_sum_x + (single_K_val * pt_i.x), top_sum_y + (single_K_val * pt_i.y), bottom_sum + single_K_val]
 
     return part_sums.value
 
