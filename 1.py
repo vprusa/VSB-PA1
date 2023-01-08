@@ -49,7 +49,7 @@ def paral_srflp_permutation(l, c, s, best_found, lock):
   '''
   n = len(c)
   perm_gen_base = [a for a in range(n) if a != s]
-  print(s, perm_gen_base)
+  # print(s, perm_gen_base)
 
   skip = False
   index_to_skip = -1
@@ -59,6 +59,7 @@ def paral_srflp_permutation(l, c, s, best_found, lock):
       perm.extend(perm_gen)
 
       if index_to_skip != -1 and perm[index_to_skip] == index_val_to_skip:
+          # print("Skipping permutation: ", perm)
           continue
       cur_best_solution = max_val
 
@@ -79,7 +80,7 @@ def paral_srflp_permutation(l, c, s, best_found, lock):
       with lock:
         if val < best_found.value[0]:
             best_found.value = [val, perm]
-            print(s, best_found.value[0], best_found.value[1])
+            print("Prefix:", s, "value:", best_found.value[0], "postfix permutation: ", best_found.value[1])
 
   return best_found.value[0]
 
@@ -103,12 +104,12 @@ def run():
       # kazde vlakno v poolu se stara o cast vypoctu, rozdeleno dle seznamu 'splitter'
       ret = pool.starmap(paral_srflp_permutation, zip(it.repeat(l), it.repeat(c), splitter, it.repeat(best_found), it.repeat(lock)))
     # vypsani nejlepsich reseni
-    print(best_found.value[0])
-    print(best_found.value[1])
+    print("Best Value:", best_found.value[0], "postfix permutation: ", best_found.value[1])
+
     # ulozeni vysledku do souboru
     output_file = open('1.py.res.txt', 'w')
     output_file.write('Val:\n' + str(best_found.value[0]))
-    output_file.write('Perm:\n' + " ".join(best_found.value[1]))
+    output_file.write('Perm:\n' + " ".join(str(best_found.value[1])))
     output_file.close()
   # print(ret)
 
