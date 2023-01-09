@@ -59,6 +59,8 @@ class Vis2D(object):
     plt = None
     layout = None
 
+    threshold = 1
+
     prs = dict()
 
     distances = (-1,1)
@@ -90,10 +92,16 @@ class Vis2D(object):
                 s.G = nx.from_edgelist(ast.literal_eval(s.graphData))
         else:
             s.G = graph
-            init_pr = 0
+            s.number_of_nodes = s.G.number_of_nodes()
+            init_pr = 1.0 / s.number_of_nodes
+            idx = 0
             for n in s.G.nodes(data=True):
+                # n[1]['pos'] = idx
                 n[1]['cur_pr'] = init_pr
-
+                n[1]['old_threshold'] = 0
+                idx = idx + 1
+        s.labels = None
+        s.labels_old = None
         # generates random weights to graph
         # for (u, v) in s.G.nodes(data=True):
         #     v['pos'] = (random.randint(s.distances[0], s.distances[1]), random.randint(s.distances[0], s.distances[1]))
@@ -119,13 +127,8 @@ class Vis2D(object):
         s.idx_weights = range(2, 30, 1)
 
         s.layout = nx.circular_layout(s.G)
-        # list(map(lambda x: x[1]['pos'],s.G.nodes(data=True)))
-        # pos = {point: point for point in list(map(lambda x: x[1]['pos'], s.G.nodes(data=True)))}
-        # s.layout = list(pos)
-        # s.fig = s.plt.figure("BIA - #3 - Genetic alg. on Traveling Salesman Problem (TSP) ", figsize=s.figsize)
-        # s.fig.set_title("BIA - #3 - Genetic alg. on Traveling Salesman Problem (TSP) ")
-        # s.ax = s.plt.axes()
-        # s.plt.axis("on")
+        nx.set_node_attributes(s.G, s.layout, 'pos')
+
         s.ax.set_xlim(s.distances[0], s.distances[1])
         s.ax.set_ylim(s.distances[0], s.distances[1])
         s.ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
@@ -134,75 +137,64 @@ class Vis2D(object):
         s.plt.pause(1)
 
 
-    def f(s, i):
-        """
-            price function, idk why it is called 'f()' in this case,
-            but for sake of balancing readeability and documentation
-            I use internal function 'price()' (note: should I rename to 'cost()'?)
-        """
-        return s.price(i)
+    d = 0.85
 
-    def show_path(s, ga, ars = '->', color = 'k', w = None, draw = True):
-        ea = s.get_edges(ga)
-        if draw:
-            for e in ea:
-                if w == None:
-                    ew = w
-                else:
-                    # ew = s.idx_weights[:len(ga)]
-                    ew = 1
-                nx.draw_networkx_edges(s.G, pos=s.layout, edgelist=e, width=ew, arrowstyle=ars, arrows=True, edge_color=color)
-                s.show_axes()
-        return ga
+
+    def price(s, u):
+        first = (1.0 - s.d) / s.number_of_nodes
+        second_sum = 0
+        out_nodes = s.G.out_edges(nbunch=u[0])
+        for v in out_nodes:
+            v_node = list(filter(lambda x: x[0] == v[1], list(s.G.nodes(data=True))))[0]
+            # second_sum_div_top = s.price(v_node)
+            second_sum_div_top = v_node[1]['cur_pr']
+            second_sum_div_bottom = len(s.G.in_edges(nbunch=v_node[0]))  # in nodes
+            second_sum_div = second_sum_div_top / second_sum_div_bottom
+            second_sum = second_sum + second_sum_div
+        total = first + s.d * second_sum
+        return total
+
+    def sum_prices(s, which='cur_pr'):
+        return sum(x[1][which] for x in s.G.nodes(data=True))
+
+    def check_threshold_condition(s,n, min_threshold = 0):
+        threshold_cond = (n["cur_threshold"] <= min_threshold or n["cur_threshold"] > 0)
+        threshold_cond_2 = n["old_threshold"] != n["cur_threshold"]
+        return threshold_cond and threshold_cond_2
+
 
     def alg(s):
         """
             Genetic alg. for solving TSP
         """
-        # population = Generate NP random individuals Evaluate individuals within population
-        # s.population = list()
-        # for i in range(0, s.NP):
-        #     s.population.append(s.random_circle(list(s.G.nodes())))
-        #
-        # for i in range(0, s.GC):
-        #     s.new_population = s.population.copy()  # Offspring is always put to a new population
-        #
-        #     for j in range(0, s.NP-1):
-        #         parent_A = s.population[j]
-        #         # parent_B = random individual from population (parent_B != parent_A)
-        #         parent_B_i = None
-        #         while parent_B_i is None or parent_B_i == j:
-        #             parent_B_i = random.randint(0, s.NP - 1)
-        #         parent_B = s.population[parent_B_i]
-        #
-        #         offspring_AB = s.crossover(parent_A, parent_B)
-        #         if random.uniform(0.0, 1.0) < 0.5:
-        #             offspring_AB2 = s.mutate(offspring_AB)
-        #             offspring_AB = offspring_AB2
-        #         s.g1 = parent_A
-        #         s.g2 = offspring_AB
-        #         # s.evaluate(offspring_AB)
-        #
-        #         if s.f(offspring_AB) < s.f(parent_A):
-        #             s.new_population[j] = offspring_AB
-        #     s.population = s.new_population
-        #     s.show_min_path(color='green')
-        #
-        # s.show_min_path(color='red')
-        s.plt.pause(10)
+
+        idx = 0
+
+        min_threshold = 0
+        iters = 0
+        while True:
+            threshold_reached = True
+
+            for i in G.nodes(data=True):
+                pprint(i)
+                new_price = s.price(i)
+                i[1]["old_pr"] = i[1]["cur_pr"]
+                i[1]["cur_pr"] = new_price
+                i[1]["cur_threshold"] = i[1]["old_pr"] - i[1]["cur_pr"]
+                if s.check_threshold_condition(i[1], min_threshold):
+                    threshold_reached = False
+                idx = idx + 1
+                s.update()
+            if threshold_reached:
+                pprint(s.G.nodes(data=True))
+                pprint("threshold_reached at " + str(iters) + "")
+                s.update()
+                break
+            iters = iters + 1
+
+
+        s.plt.pause(15)
         pass
-
-    def get_edges(s, nodes):
-        edges = list()
-
-        def get_edge(i1, i2):
-            return list(filter(lambda i: i[1] == i2, s.G.edges(i1)))
-
-        for i in range(0, len(nodes) - 1):
-            edges.append(get_edge(nodes[i], nodes[i + 1]))
-        edges.append(get_edge(nodes[len(nodes) - 1], nodes[0]))
-        return edges
-
 
     def update(s, edges=None):
         """
@@ -216,10 +208,10 @@ class Vis2D(object):
         # Background nodes
         pprint(s.G.edges())
         nx.draw_networkx_edges(s.G, pos=s.layout, edge_color="gray", arrowstyle='->', arrows=True, arrowsize=10)
-        forestNodes = list([item for sublist in (([l[0], l[1]]) for l in edges) for item in sublist])
+        # forestNodes = list([item for sublist in (([l[0], l[1]]) for l in edges) for item in sublist])
 
         # dbg("forestNodes", forestNodes)
-        forestNodes = list(filter(None, forestNodes))
+        # forestNodes = list(filter(None, forestNodes))
         # dbg("forestNodes -!None", forestNodes)
         # dbg(set(self.G.nodes()))
         # null_nodes = nx.draw_networkx_nodes(s.G, pos=s.layout, nodelist=set(s.G.nodes()) - set(forestNodes),
@@ -227,30 +219,25 @@ class Vis2D(object):
         null_nodes = nx.draw_networkx_nodes(s.G, pos=s.layout, nodelist=set(s.G.nodes()), node_color="white", ax=s.ax)
 
         # start node highlight
-        nx.draw_networkx_nodes(s.G, pos=s.layout, nodelist=set(filter(lambda i: i == s.start_node, s.G.nodes())), node_color="green", ax=s.ax)
 
         if (null_nodes is not None):
             null_nodes.set_edgecolor("black")
-            nullNodesIds = set(s.G.nodes()) - set(forestNodes)
-            # dbg("nullNodes", nullNodes)
-            # nx.draw_networkx_labels(s.G, pos=s.layout, labels=dict(zip(nullNodesIds, nullNodesIds)),
-            #                         font_color="black",
-            #                         ax=s.ax)
-            nx.draw_networkx_labels(s.G, pos=s.layout, labels=dict(zip(set(s.G.nodes()), set(list(
-                map(lambda x: str(x[0]) + "\n" + str(x[1]['cur_pr']), s.G.nodes(data=True)))))), font_color="black", ax=s.ax)
-        # nx.draw_networkx_labels(s.G, pos=s.layout, labels=dict(zip(set(s.G.nodes()), set(s.G.nodes()))), font_color="black", ax=s.ax)
-        # list(map(lambda x: str(x) + "\n" + "---", s.G.nodes()))
+            s.labels_old = s.labels
+            s.labels = dict(zip(set(s.G.nodes()), set(list(
+                map(lambda x: str(x[0]) + "\n" + str(round(x[1]['cur_pr'], 4)), s.G.nodes(data=True))))))
+            nx.draw_networkx_labels(s.G, pos=s.layout, labels=s.labels, font_size=6,
+                                    font_color="red", ax=s.ax)
         # Query nodes
-        s.idx_colors = sns.cubehelix_palette(len(forestNodes), start=.5, rot=-.75)[::-1]
+        # s.idx_colors = sns.cubehelix_palette(len(forestNodes), start=.5, rot=-.75)[::-1]
         color_map = []
 
-        query_nodes = nx.draw_networkx_nodes(s.G, pos=s.layout, nodelist=forestNodes,
-                                             node_color=s.idx_colors[:len(forestNodes)], ax=s.ax)
+        # query_nodes = nx.draw_networkx_nodes(s.G, pos=s.layout, nodelist=forestNodes,
+        #                                      node_color=s.idx_colors[:len(forestNodes)], ax=s.ax)
 
-        if query_nodes is not None:
-            query_nodes.set_edgecolor("white")
+        # if query_nodes is not None:
+        #     query_nodes.set_edgecolor("white")
         # nx.draw_networkx_labels(s.G, pos=s.layout, labels=dict(zip(forestNodes[0], forestNodes[0])), font_color="red", ax=s.ax)
-        nx.draw_networkx_labels(s.G, pos=s.layout, labels=dict(zip(forestNodes, forestNodes)), font_color="white", ax=s.ax)
+        # nx.draw_networkx_labels(s.G, pos=s.layout, labels=dict(zip(forestNodes, forestNodes)), font_color="white", ax=s.ax)
 
         edges = list((l[0], l[1]) for l in edges)
         dbg("edges", edges)
@@ -264,15 +251,12 @@ class Vis2D(object):
         # s.ax.set_xticks([])
         # s.ax.set_yticks([])
 
-        # s.ax.set_title("Step #{}, Price: {}".format(Vis2D.frameNo, Vis2D.min_individual_price))
-        # s.ax.set_title("Step #{}, NP: {}, GC {}, DC: {}, Price: {}".format(Vis2D.frameNo,Vis2D.NP,Vis2D.GC,Vis2D.DC, Vis2D.min_individual_price))
-        # s.ax.set_title("Step #{}, NP: {}, GC {}, DC: {}, Price: {}".format(Vis2D.frameNo,Vis2D.NP,Vis2D.GC,Vis2D.DC, Vis2D.min_individual_price))
+        s.ax.set_title("Step #{}, Price: {}".format(Vis2D.frameNo, s.sum_prices()))
         s.show_axes()
 
-        # self.plt.pause(5)
-        # s.plt.pause(s.frameTimeout)
-        # self.plt.pause(3)
+        s.plt.pause(s.frameTimeout)
         Vis2D.frameNo += 1
+
     def show_axes(s):
         s.ax.set_xlim(s.distances[0]-(s.distances[1]*0.1), s.distances[1]+(s.distances[1]*0.1))
         s.ax.set_ylim(s.distances[0]-(s.distances[1]*0.1), s.distances[1]+(s.distances[1]*0.1))
@@ -281,7 +265,8 @@ class Vis2D(object):
 class TSP(Vis2D):
     pass
 
-f = open("web-BerkStan.cube.txt")
+# f = open("web-BerkStan.cube.txt")
+f = open("web-BerkStan.one-way-cube.txt")
 # text = f.read()
 # f.close()
 # print(text)
@@ -304,9 +289,11 @@ while True:
         break
     if not line.startswith('#') and len(line) > 0 and line[0].isdigit():
         edge = line.split("	")
-        G.add_edge(int(edge[0]),int(edge[1]))
+        G.add_edge(int(edge[0]), int(edge[1]))
 
     # print("Line{}: {}".format(count, line.strip()))
+
+f.close()
 
 # graph_data_str = "[("+"1   2\n2   3\n1   4".replace("   ", ",").replace("\n","),(")+")]"
 # graph_data_str = "[("+text3.replace("	", ",").replace("\n","),(")+")]"
