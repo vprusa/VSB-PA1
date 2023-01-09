@@ -59,59 +59,50 @@ class Vis2D(object):
     plt = None
     layout = None
 
-    g1 = list()  # generation
-    g2 = list()  # generation
-    # ng = list()  # next generation
+    prs = dict()
 
-
-    pop_cnt = 10
-    cg = list(list())
-    ng = list(list())
-
-    distances = (0,500)
+    distances = (-1,1)
 
     start_node = 0
 
-    # NP = 20
-    # G = 200
-    # D = 20  # In TSP, it will be a number of cities
     nxgraphType = "complete_graph"
 
-    NP = 20  # population cnt
-    GC = 200  # generation cnt
+    NP = 10
     DC = 20  # In TSP, it will be a number of cities
+
     figsize = (10, 6)
-    # NP = 20  # population cnt
-    # GC = 40  # generation cnt
-    # DC = 8  # In TSP, it will be a number of cities
-    # figsize = (6, 4)
 
-    population = None
-
-    def __init__(s, nxgraphType=None, nxgraphOptions=None, graphData=None):
+    def __init__(s, nxgraphType=None, nxgraphOptions=None, graphData=None, graph=None):
         if nxgraphType is not None:
             s.nxgraphType = nxgraphType
         s.nxgraphOptions = nxgraphOptions
         s.graphData = graphData
-        if graphData is None:
-            if nxgraphOptions is None:
-                if s.nxgraphType == "complete_graph":
-                    s.G = nx.complete_graph(s.DC)
+        if graph is None:
+            if graphData is None:
+                if nxgraphOptions is None:
+                    if s.nxgraphType == "complete_graph":
+                        s.G = nx.complete_graph(s.DC)
+                    else:
+                        s.G = getattr(nx, s.nxgraphType)()
                 else:
-                    s.G = getattr(nx, s.nxgraphType)()
+                    s.G = getattr(nx, s.nxgraphType)(s.nxgraphOptions)
             else:
-                s.G = getattr(nx, s.nxgraphType)(s.nxgraphOptions)
+                s.G = nx.from_edgelist(ast.literal_eval(s.graphData))
         else:
-            s.G = nx.from_edgelist(ast.literal_eval(s.graphData))
+            s.G = graph
+            init_pr = 0
+            for n in s.G.nodes(data=True):
+                n[1]['cur_pr'] = init_pr
+
         # generates random weights to graph
-        for (u, v) in s.G.nodes(data=True):
-            v['pos'] = (random.randint(s.distances[0], s.distances[1]), random.randint(s.distances[0], s.distances[1]))
-        for (u, v, w) in s.G.edges(data=True):
-            # w['weight'] = (random.randint(1, 40))
-            u1 = s.G.nodes()[u]['pos']
-            v1 = s.G.nodes()[v]['pos']
-            real_dist = np.sqrt(np.power(u1[0]-v1[0], 2) + np.power(u1[1]-v1[1], 2))
-            w['weight'] = int(real_dist)
+        # for (u, v) in s.G.nodes(data=True):
+        #     v['pos'] = (random.randint(s.distances[0], s.distances[1]), random.randint(s.distances[0], s.distances[1]))
+        # for (u, v, w) in s.G.edges(data=True):
+        #     # w['weight'] = (random.randint(1, 40))
+        #     u1 = s.G.nodes()[u]['pos']
+        #     v1 = s.G.nodes()[v]['pos']
+        #     real_dist = np.sqrt(np.power(u1[0]-v1[0], 2) + np.power(u1[1]-v1[1], 2))
+        #     w['weight'] = int(real_dist)
 
         # or load graph with weights them directly...
         # s.G = nx.from_edgelist(list(
@@ -127,10 +118,10 @@ class Vis2D(object):
         # s.fig, s.ax = plt.subplots()
         s.idx_weights = range(2, 30, 1)
 
-        # s.layout = nx.circular_layout(s.G)
+        s.layout = nx.circular_layout(s.G)
         # list(map(lambda x: x[1]['pos'],s.G.nodes(data=True)))
-        pos = {point: point for point in list(map(lambda x: x[1]['pos'], s.G.nodes(data=True)))}
-        s.layout = list(pos)
+        # pos = {point: point for point in list(map(lambda x: x[1]['pos'], s.G.nodes(data=True)))}
+        # s.layout = list(pos)
         # s.fig = s.plt.figure("BIA - #3 - Genetic alg. on Traveling Salesman Problem (TSP) ", figsize=s.figsize)
         # s.fig.set_title("BIA - #3 - Genetic alg. on Traveling Salesman Problem (TSP) ")
         # s.ax = s.plt.axes()
@@ -140,7 +131,7 @@ class Vis2D(object):
         s.ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
 
         s.update()
-        # s.plt.pause(3)
+        s.plt.pause(1)
 
 
     def f(s, i):
@@ -150,32 +141,6 @@ class Vis2D(object):
             I use internal function 'price()' (note: should I rename to 'cost()'?)
         """
         return s.price(i)
-
-    def crossover(s,i1, i2):
-        i3 = i1.copy()
-        for i in range(0, len(i1)-1):
-            if bool(random.getrandbits(1)):
-                # due to the way the data structures are used I cannot simply merge some nodes together
-                # because it would lead tu duplicate elements, so I deal with it by
-                # swapping elements according to parent nodes on given position and so the
-                # offspring has nodes ordered according to both parents
-                # this is not a mutation because I need information from both parents to do this
-                offspring_i = i3.index(i2[i])
-                i3[i], i3[offspring_i] = i3[offspring_i], i3[i]
-        return i3
-
-    def show_min_path(s, color='blue'):
-        # eval final population
-        s.min_individual = s.population[0]
-        Vis2D.min_individual_price = s.f(s.min_individual)
-        for i in range(1, len(s.population)):
-            price = s.f(s.population[i])
-            if (Vis2D.min_individual_price > price):
-                s.min_individual = s.population[i]
-                Vis2D.min_individual_price = price
-        s.update()
-        s.show_path(s.min_individual, color=color, w=1)
-        s.plt.pause(s.frameTimeout)
 
     def show_path(s, ga, ars = '->', color = 'k', w = None, draw = True):
         ea = s.get_edges(ga)
@@ -190,46 +155,40 @@ class Vis2D(object):
                 s.show_axes()
         return ga
 
-    def price(s, g):
-        sum = 0
-        for i in range(0, len(g) - 2):
-            sum = sum + s.G[g[i]][g[i + 1]]['weight']
-        return sum
-
     def alg(s):
         """
             Genetic alg. for solving TSP
         """
         # population = Generate NP random individuals Evaluate individuals within population
-        s.population = list()
-        for i in range(0, s.NP):
-            s.population.append(s.random_circle(list(s.G.nodes())))
-
-        for i in range(0, s.GC):
-            s.new_population = s.population.copy()  # Offspring is always put to a new population
-
-            for j in range(0, s.NP-1):
-                parent_A = s.population[j]
-                # parent_B = random individual from population (parent_B != parent_A)
-                parent_B_i = None
-                while parent_B_i is None or parent_B_i == j:
-                    parent_B_i = random.randint(0, s.NP - 1)
-                parent_B = s.population[parent_B_i]
-
-                offspring_AB = s.crossover(parent_A, parent_B)
-                if random.uniform(0.0, 1.0) < 0.5:
-                    offspring_AB2 = s.mutate(offspring_AB)
-                    offspring_AB = offspring_AB2
-                s.g1 = parent_A
-                s.g2 = offspring_AB
-                # s.evaluate(offspring_AB)
-
-                if s.f(offspring_AB) < s.f(parent_A):
-                    s.new_population[j] = offspring_AB
-            s.population = s.new_population
-            s.show_min_path(color='green')
-
-        s.show_min_path(color='red')
+        # s.population = list()
+        # for i in range(0, s.NP):
+        #     s.population.append(s.random_circle(list(s.G.nodes())))
+        #
+        # for i in range(0, s.GC):
+        #     s.new_population = s.population.copy()  # Offspring is always put to a new population
+        #
+        #     for j in range(0, s.NP-1):
+        #         parent_A = s.population[j]
+        #         # parent_B = random individual from population (parent_B != parent_A)
+        #         parent_B_i = None
+        #         while parent_B_i is None or parent_B_i == j:
+        #             parent_B_i = random.randint(0, s.NP - 1)
+        #         parent_B = s.population[parent_B_i]
+        #
+        #         offspring_AB = s.crossover(parent_A, parent_B)
+        #         if random.uniform(0.0, 1.0) < 0.5:
+        #             offspring_AB2 = s.mutate(offspring_AB)
+        #             offspring_AB = offspring_AB2
+        #         s.g1 = parent_A
+        #         s.g2 = offspring_AB
+        #         # s.evaluate(offspring_AB)
+        #
+        #         if s.f(offspring_AB) < s.f(parent_A):
+        #             s.new_population[j] = offspring_AB
+        #     s.population = s.new_population
+        #     s.show_min_path(color='green')
+        #
+        # s.show_min_path(color='red')
         s.plt.pause(10)
         pass
 
@@ -244,21 +203,6 @@ class Vis2D(object):
         edges.append(get_edge(nodes[len(nodes) - 1], nodes[0]))
         return edges
 
-    def random_circle(s, nodes):
-        x = nodes.copy()
-        random.shuffle(x)
-        return x
-
-    def mutate(s, nodes_, cnt = 1):
-        # swaps 2 random elements in array 'cnt' times
-        # nodes = nodes_.copy()
-        # swapped = random.shuffle(nodes)
-        swapped = nodes_.copy()
-        for i in range(0, cnt):
-            pos1 = random.randint(0, len(nodes_)-1)
-            pos2 = random.randint(0, len(nodes_)-1)
-            swapped[pos1], swapped[pos2] = swapped[pos2], swapped[pos1]
-        return swapped
 
     def update(s, edges=None):
         """
@@ -271,7 +215,7 @@ class Vis2D(object):
 
         # Background nodes
         pprint(s.G.edges())
-        # nx.draw_networkx_edges(s.G, pos=s.layout, edge_color="gray", arrowstyle='-|>', arrowsize=10)
+        nx.draw_networkx_edges(s.G, pos=s.layout, edge_color="gray", arrowstyle='->', arrows=True, arrowsize=10)
         forestNodes = list([item for sublist in (([l[0], l[1]]) for l in edges) for item in sublist])
 
         # dbg("forestNodes", forestNodes)
@@ -289,10 +233,13 @@ class Vis2D(object):
             null_nodes.set_edgecolor("black")
             nullNodesIds = set(s.G.nodes()) - set(forestNodes)
             # dbg("nullNodes", nullNodes)
-            nx.draw_networkx_labels(s.G, pos=s.layout, labels=dict(zip(nullNodesIds, nullNodesIds)),
-                                    font_color="black",
-                                    ax=s.ax)
-
+            # nx.draw_networkx_labels(s.G, pos=s.layout, labels=dict(zip(nullNodesIds, nullNodesIds)),
+            #                         font_color="black",
+            #                         ax=s.ax)
+            nx.draw_networkx_labels(s.G, pos=s.layout, labels=dict(zip(set(s.G.nodes()), set(list(
+                map(lambda x: str(x[0]) + "\n" + str(x[1]['cur_pr']), s.G.nodes(data=True)))))), font_color="black", ax=s.ax)
+        # nx.draw_networkx_labels(s.G, pos=s.layout, labels=dict(zip(set(s.G.nodes()), set(s.G.nodes()))), font_color="black", ax=s.ax)
+        # list(map(lambda x: str(x) + "\n" + "---", s.G.nodes()))
         # Query nodes
         s.idx_colors = sns.cubehelix_palette(len(forestNodes), start=.5, rot=-.75)[::-1]
         color_map = []
@@ -318,7 +265,8 @@ class Vis2D(object):
         # s.ax.set_yticks([])
 
         # s.ax.set_title("Step #{}, Price: {}".format(Vis2D.frameNo, Vis2D.min_individual_price))
-        s.ax.set_title("Step #{}, NP: {}, GC {}, DC: {}, Price: {}".format(Vis2D.frameNo,Vis2D.NP,Vis2D.GC,Vis2D.DC, Vis2D.min_individual_price))
+        # s.ax.set_title("Step #{}, NP: {}, GC {}, DC: {}, Price: {}".format(Vis2D.frameNo,Vis2D.NP,Vis2D.GC,Vis2D.DC, Vis2D.min_individual_price))
+        # s.ax.set_title("Step #{}, NP: {}, GC {}, DC: {}, Price: {}".format(Vis2D.frameNo,Vis2D.NP,Vis2D.GC,Vis2D.DC, Vis2D.min_individual_price))
         s.show_axes()
 
         # self.plt.pause(5)
@@ -333,5 +281,37 @@ class Vis2D(object):
 class TSP(Vis2D):
     pass
 
-r = TSP()
+f = open("web-BerkStan.cube.txt")
+# text = f.read()
+# f.close()
+# print(text)
+# text2 = ""
+# for line in text.split(sep="\n"):
+#     if not line.startswith('#') and len(line) > 0 and line[0].isdigit():
+#         text2 = text2 + line + "\n"
+# text3 = text2[0:-1]
+
+# Using readlines()
+# file1 = open('myfile.txt', 'r')
+count = 0
+G = nx.DiGraph()
+while True:
+    count += 1
+
+    # Get next line from file
+    line = f.readline()
+    if not line:
+        break
+    if not line.startswith('#') and len(line) > 0 and line[0].isdigit():
+        edge = line.split("	")
+        G.add_edge(int(edge[0]),int(edge[1]))
+
+    # print("Line{}: {}".format(count, line.strip()))
+
+# graph_data_str = "[("+"1   2\n2   3\n1   4".replace("   ", ",").replace("\n","),(")+")]"
+# graph_data_str = "[("+text3.replace("	", ",").replace("\n","),(")+")]"
+
+# r = TSP(graphData=[(1, 2), (1, 3)])
+r = TSP(graph=G)
+# r = TSP()
 r.alg()

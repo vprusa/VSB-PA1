@@ -13,33 +13,12 @@ https://homel.vsb.cz/~kro080/PAI-2022/U2/
 https://youtrack.jetbrains.com/issue/PY-52273/Debugger-multiprocessing-hangs-pycharm-2021.3
 https://youtrack.jetbrains.com/issue/PY-37366/Debugging-with-multiprocessing-managers-no-longer-working-after-update-to-2019.2-was-fine-in-2019.1#focus=Comments-27-4690501.0-0
 
-Popis reseni:
-Protoze nebylo specifikovano jak zpracovat data, ktera budeme do MeanShift podavat,
-tak jsem sepsal program, ktery:
-- nacte mnist
-- mergne vsechny obrazky danych labelu
-- vysledny 2D prostor 28x28 profiltruje pres prah (threshold)
-- vysledny profiltrovany 2D prostor prevede na body takove, ze pokud je hodnota v 2D pixelech nenulova, 
-    tak ji vezme jako bod a prida ji do seznamu bodu
-- tyto body reprezentuji vlastnosti (features)
-- nad temito body je proveden MeanShift
-
-- Paralelismus resim v ramci MeanShift algoritmu v iteraci nad jednotlivymi body pro vypocet Gausova kernelu
-
-Pozn.:
-V zadani bylo, ze nemusime mit funkcni klasifikaci a s ohledem na implementaci jsem se ji dotkl jen okrajove,
-  se znamym predpokladem poctu trid (ktery se v samotnem MeanShift nijak nepouziva).
-Pokud by bylo receno, ze z MNIST mame nejak jinak extrahovat features vektory, tak to udelam tak... 
-Nejblize lepsi extrakci byl projekt:
-http://deciphertoknow.com/mnist-k-means-clustering/
-Nicmene v jeho datove sade mnist uz 'feature vector' je.
-
 '''
 
 mnist_data_file = 'mnist/mnist_train.csv'
 mnist_test_file = 'mnist/mnist_test.csv'
 
-pool_size_l1 = 4
+pool_size_l1 = 4  # TODO not used
 pool_size_l2 = 8
 
 width = 28
@@ -91,20 +70,12 @@ def convert_sum2pts(sum):
             if ar[x_i][y_i] > threshold:
                 if threshold_multiplier_const is None:
                     pts.append(Pt(x_i, y_i))
-                # else:
-                #     '''
-                #     for the fun out of it I have decided to add another feature
-                #     that is point count multiplication
-                #     '''
-                #     cnt = ar[x_i][y_i] % threshold_multiplier_const
-                #     for i in range(0, cnt):
-                #         pts.append(Pt(x_i, y_i))
+
     return pts
 
 def round_pt_up(pt):
     x = 0 if np.isnan(pt.x) else math.ceil(pt.x)
     y = 0 if np.isnan(pt.y) else math.ceil(pt.y)
-    # y = math.ceil(pt.y)
     x = width-1 if (x >= width) else x
     y = height-1 if (y >= height) else y
     x = 0 if (x < 0) else x
@@ -138,11 +109,11 @@ def eval_mean_shift_step(Apt, pts):
     # budeme pracovat ve sdilene pameti
     with mp.Manager() as manager:
         lock = manager.Lock()
-        # max val and empty permutation
+        # min val and empty permutation
         triplet = manager.Value('d', [0.0, 0.0, 0.0])
         # spustime ve vice procesech
         with mp.Pool(processes=pool_size_l2) as pool:
-            # kazde vlakno v poolu se stara o cast vypoctu, rozdeleno dle seznamu 'splitter'
+            # kazde vlakno v poolu se stara o cast vypoctu, rozdeleno dle seznamu 'pts'
             ret = pool.starmap(worker, zip(it.repeat(Apt), pts, it.repeat(triplet), it.repeat(lock)))
 
     def sum_i(ar, idx):
@@ -151,9 +122,9 @@ def eval_mean_shift_step(Apt, pts):
             sum_m = sum_m + r[idx]
         return sum_m
 
-    top_sum_x = sum_i(ret,0)
-    top_sum_y = sum_i(ret,1)
-    bottom_sum = sum_i(ret,2)
+    top_sum_x = sum_i(ret, 0)
+    top_sum_y = sum_i(ret, 1)
+    bottom_sum = sum_i(ret, 2)
 
     new_Apt = round_pt_up(Pt(top_sum_x/bottom_sum, top_sum_y/bottom_sum))
     return new_Apt
