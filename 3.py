@@ -127,6 +127,7 @@ class Vis2D(object):
         s.idx_weights = range(2, 30, 1)
 
         s.layout = nx.circular_layout(s.G)
+        # s.layout = nx.random_layout(s.G)
         nx.set_node_attributes(s.G, s.layout, 'pos')
 
         s.ax.set_xlim(s.distances[0], s.distances[1])
@@ -203,7 +204,7 @@ class Vis2D(object):
         if edges is None:
             edges = list(list())
         s.ax.clear()
-        s.show_axes()
+        # s.show_axes()
 
         # Background nodes
         pprint(s.G.edges())
@@ -216,17 +217,28 @@ class Vis2D(object):
         # dbg(set(self.G.nodes()))
         # null_nodes = nx.draw_networkx_nodes(s.G, pos=s.layout, nodelist=set(s.G.nodes()) - set(forestNodes),
         #                                     node_color="white", ax=s.ax)
-        null_nodes = nx.draw_networkx_nodes(s.G, pos=s.layout, nodelist=set(s.G.nodes()), node_color="white", ax=s.ax)
+        # null_nodes = nx.draw_networkx_nodes(s.G, pos=s.layout, nodelist=set(s.G.nodes()), node_color="white", ax=s.ax)
+        null_nodes = nx.draw_networkx_nodes(s.G, pos=s.layout, nodelist=set(s.G.nodes()), node_color="white")
 
         # start node highlight
 
         if (null_nodes is not None):
             null_nodes.set_edgecolor("black")
             s.labels_old = s.labels
+            # s.labels = dict(zip(set(s.G.nodes()), set(list(
+            s.labels3 = dict()
+            for n in s.G.nodes(data=True):
+                n[1]['label'] = str(n[0]) + "\n" + str(round(n[1]['cur_pr'], 4))
+                s.labels3[n[0]] = n[1]['label']
+            #     map(lambda x: str(x[0]) + "\n" + str(round(x[1]['cur_pr'], 4)), s.G.nodes(data=True))))))
             s.labels = dict(zip(set(s.G.nodes()), set(list(
-                map(lambda x: str(x[0]) + "\n" + str(round(x[1]['cur_pr'], 4)), s.G.nodes(data=True))))))
-            nx.draw_networkx_labels(s.G, pos=s.layout, labels=s.labels, font_size=6,
-                                    font_color="red", ax=s.ax)
+                # map(lambda x: str(round(x[1]['cur_pr'], 4)), s.G.nodes(data=True))))))
+            map(lambda x: x[1]['label'], s.G.nodes(data=True))))))
+            # s.labels = dict(zip(set(s.G.nodes()), set(list(
+            #     map(lambda x: str(x[0]) + "\n" + str(round(x[1]['cur_pr'], 4)), s.G.nodes(data=True))))))
+            # nx.draw_networkx_labels(s.G, pos=s.layout, labels=s.labels, font_size=6, font_color="red", ax=s.ax)
+            s.labels2 = {key: val for key, val in sorted(s.labels.items(), key=lambda ele: ele[0], reverse=False)}
+        nx.draw_networkx_labels(s.G, pos=nx.circular_layout(s.G), labels=s.labels3, font_size=6, font_color="red", ax=s.ax)
         # Query nodes
         # s.idx_colors = sns.cubehelix_palette(len(forestNodes), start=.5, rot=-.75)[::-1]
         color_map = []
@@ -252,7 +264,7 @@ class Vis2D(object):
         # s.ax.set_yticks([])
 
         s.ax.set_title("Step #{}, Price: {}".format(Vis2D.frameNo, s.sum_prices()))
-        s.show_axes()
+        # s.show_axes()
 
         s.plt.pause(s.frameTimeout)
         Vis2D.frameNo += 1
