@@ -47,6 +47,10 @@ def dbg(v, *args):
         pprint(v)
 
 class Vis2D(object):
+
+    # run_vis = True
+    run_vis = False
+
     frameNo = 0
     min_individual_price = 0
 
@@ -119,23 +123,23 @@ class Vis2D(object):
         #      (4, 5, {'weight': 5}), (4, 7, {'weight': 20}), (5, 6, {'weight': 38}), (6, 7, {'weight': 3})]
         #     ))
 
+        if Vis2D.run_vis:
+            s.plt = plt
+            # s.fig, s.ax = plt.fig("BIA - #3 - Genetic alg. on Traveling Salesman Problem (TSP) ", figsize=s.figsize)
+            s.fig, s.ax = plt.subplots()
+            # s.fig, s.ax = plt.subplots()
+            s.idx_weights = range(2, 30, 1)
 
-        s.plt = plt
-        # s.fig, s.ax = plt.fig("BIA - #3 - Genetic alg. on Traveling Salesman Problem (TSP) ", figsize=s.figsize)
-        s.fig, s.ax = plt.subplots()
-        # s.fig, s.ax = plt.subplots()
-        s.idx_weights = range(2, 30, 1)
+            s.layout = nx.circular_layout(s.G)
+            # s.layout = nx.random_layout(s.G)
+            nx.set_node_attributes(s.G, s.layout, 'pos')
 
-        s.layout = nx.circular_layout(s.G)
-        # s.layout = nx.random_layout(s.G)
-        nx.set_node_attributes(s.G, s.layout, 'pos')
+            s.ax.set_xlim(s.distances[0], s.distances[1])
+            s.ax.set_ylim(s.distances[0], s.distances[1])
+            s.ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
 
-        s.ax.set_xlim(s.distances[0], s.distances[1])
-        s.ax.set_ylim(s.distances[0], s.distances[1])
-        s.ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
-
-        s.update()
-        s.plt.pause(1)
+            s.update()
+            s.plt.pause(1)
 
 
     d = 0.85
@@ -193,14 +197,17 @@ class Vis2D(object):
                 break
             iters = iters + 1
 
-
-        s.plt.pause(15)
+        if Vis2D.run_vis:
+            s.plt.pause(15)
         pass
 
     def update(s, edges=None):
         """
         clear and update default network
         """
+        if not Vis2D.run_vis:
+            return
+
         if edges is None:
             edges = list(list())
         s.ax.clear()
@@ -278,7 +285,13 @@ class TSP(Vis2D):
     pass
 
 # f = open("web-BerkStan.cube.txt")
-f = open("web-BerkStan.one-way-cube.txt")
+# f = open("web-BerkStan.one-way-cube.txt")
+# f = open("web-BerkStan.pentagram-full.txt")
+# f = open("web-BerkStan.pentagram-one-way.txt")
+# f = open("web-BerkStan.pentagram-one-way-reverse.txt")
+f = open("web-BerkStan.pentagram-one-way-with-one-sink.txt")
+
+
 # text = f.read()
 # f.close()
 # print(text)
