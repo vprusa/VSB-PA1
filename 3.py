@@ -1,6 +1,6 @@
 import numpy as np
 from functools import reduce
-
+import os
 '''
 https://homel.vsb.cz/~kro080/PAI-2022/U3/ukol3.html
 
@@ -93,6 +93,7 @@ class Vis2D(object):
         while True:
             count_all_lines += 1
             line = f_in.readline()
+            # TODO copy only valid (except file header) lines to tmp file and split tmp file ...
             if not line:
                 break
         f_in.close()
@@ -100,17 +101,23 @@ class Vis2D(object):
         f_in = open(file_path)
         part_i = 0
         part_cnt = 0
-        f_out = open(file_path + "." + str(part_i), 'ab+')
+        part_file_path = file_path + "." + str(part_i)
+        if os.path.exists(part_file_path):
+            os.remove(part_file_path)
+        f_out = open(part_file_path, 'a+')
         one_part_all_cnt = count_all_lines / cnt
 
         while True:
 
-            if part_cnt >= one_part_all_cnt:
+            if part_cnt+1 > one_part_all_cnt and part_i != cnt:
                 part_cnt = 0
                 f_out.close()
                 part_i = part_i + 1
-                f_out = open(file_path + "." + str(part_i))
-
+                part_file_path = file_path + "." + str(part_i)
+                if os.path.exists(part_file_path):
+                    os.remove(part_file_path)
+                f_out = open(part_file_path, 'a+')
+            part_cnt = part_cnt + 1
             line = f_in.readline()
             if not line:
                 break
