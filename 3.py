@@ -1,4 +1,5 @@
 import numpy as np
+from functools import reduce
 
 '''
 https://homel.vsb.cz/~kro080/PAI-2022/U3/ukol3.html
@@ -50,6 +51,10 @@ class Vis2D(object):
 
     # run_vis = True
     run_vis = False
+    debug_loading = True
+    debug_loading_divider = 10000
+    debug_eval = True
+    show_n_best = 3
 
     frameNo = 0
     min_individual_price = 0
@@ -78,12 +83,37 @@ class Vis2D(object):
 
     figsize = (10, 6)
 
-    def __init__(s, nxgraphType=None, nxgraphOptions=None, graphData=None, graph=None):
+    def load_graph(s, file_path):
+        f = open(file_path)
+        count = 0
+        s.G = nx.DiGraph()
+        while True:
+            count += 1
+
+            # Get next line from file
+            line = f.readline()
+            if not line:
+                break
+            if not line.startswith('#') and len(line) > 0 and line[0].isdigit():
+                edge = line.split("	")
+                s.G.add_edge(int(edge[0]), int(edge[1]))
+            if Vis2D.debug_loading:
+                if count % Vis2D.debug_loading_divider == 0:
+                    print("Line {}: {}".format(count, line.strip()))
+
+        # print("Line{}: {}".format(count, line.strip()))
+        f.close()
+        return s.G
+
+    def __init__(s, nxgraphType=None, nxgraphOptions=None, graphData=None, graph=None, file_path=None):
         if nxgraphType is not None:
             s.nxgraphType = nxgraphType
         s.nxgraphOptions = nxgraphOptions
         s.graphData = graphData
-        if graph is None:
+        s.graph = graph
+        if file_path is not None:
+            s.graph = s.load_graph(file_path)
+        if s.graph is None:
             if graphData is None:
                 if nxgraphOptions is None:
                     if s.nxgraphType == "complete_graph":
@@ -95,7 +125,7 @@ class Vis2D(object):
             else:
                 s.G = nx.from_edgelist(ast.literal_eval(s.graphData))
         else:
-            s.G = graph
+            s.G = s.graph
             s.number_of_nodes = s.G.number_of_nodes()
             init_pr = 1.0 / s.number_of_nodes
             idx = 0
@@ -141,9 +171,7 @@ class Vis2D(object):
             s.update()
             s.plt.pause(1)
 
-
     d = 0.85
-
 
     def price(s, u):
         first = (1.0 - s.d) / s.number_of_nodes
@@ -180,7 +208,7 @@ class Vis2D(object):
         while True:
             threshold_reached = True
 
-            for i in G.nodes(data=True):
+            for i in s.G.nodes(data=True):
                 pprint(i)
                 new_price = s.price(i)
                 i[1]["old_pr"] = i[1]["cur_pr"]
@@ -196,6 +224,12 @@ class Vis2D(object):
                 s.update()
                 break
             iters = iters + 1
+
+        sorted_nodes = sorted(list(s.G.nodes(data=True)), key=lambda x: x[1]['cur_pr'])
+
+        print("Best nodes:")
+        for i in range(0, Vis2D.show_n_best):
+            print("Line {}: {}".format(i, str(sorted_nodes[i])))
 
         if Vis2D.run_vis:
             s.plt.pause(15)
@@ -281,49 +315,26 @@ class Vis2D(object):
         s.ax.set_ylim(s.distances[0]-(s.distances[1]*0.1), s.distances[1]+(s.distances[1]*0.1))
         s.ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
 
-class TSP(Vis2D):
+class PageRank(Vis2D):
     pass
 
-# f = open("web-BerkStan.cube.txt")
-# f = open("web-BerkStan.one-way-cube.txt")
-# f = open("web-BerkStan.pentagram-full.txt")
-# f = open("web-BerkStan.pentagram-one-way.txt")
-# f = open("web-BerkStan.pentagram-one-way-reverse.txt")
-f = open("web-BerkStan.pentagram-one-way-with-one-sink.txt")
-
-
-# text = f.read()
-# f.close()
-# print(text)
-# text2 = ""
-# for line in text.split(sep="\n"):
-#     if not line.startswith('#') and len(line) > 0 and line[0].isdigit():
-#         text2 = text2 + line + "\n"
-# text3 = text2[0:-1]
-
-# Using readlines()
-# file1 = open('myfile.txt', 'r')
-count = 0
-G = nx.DiGraph()
-while True:
-    count += 1
-
-    # Get next line from file
-    line = f.readline()
-    if not line:
-        break
-    if not line.startswith('#') and len(line) > 0 and line[0].isdigit():
-        edge = line.split("	")
-        G.add_edge(int(edge[0]), int(edge[1]))
-
-    # print("Line{}: {}".format(count, line.strip()))
-
-f.close()
+# sample data
+# file_path = "web-BerkStan.cube.txt"
+# file_path = "web-BerkStan.one-way-cube.txt"
+# file_path = "web-BerkStan.pentagram-full.txt"
+# file_path = "web-BerkStan.pentagram-one-way.txt"
+# file_path = "web-BerkStan.pentagram-one-way-reverse.txt"
+# file_path = "web-BerkStan.pentagram-one-way-with-one-sink.txt"
+# file_path = "web-BerkStan.pentagram-one-way-with-one-sink.txt"
+# file_path = "web-BerkStan.txt"
+file_path = "web-BerkStan.head_200.txt"
+# Vis2D.run_vis = True
+Vis2D.run_vis = False
 
 # graph_data_str = "[("+"1   2\n2   3\n1   4".replace("   ", ",").replace("\n","),(")+")]"
 # graph_data_str = "[("+text3.replace("	", ",").replace("\n","),(")+")]"
 
 # r = TSP(graphData=[(1, 2), (1, 3)])
-r = TSP(graph=G)
+r = PageRank(file_path=file_path)
 # r = TSP()
 r.alg()
