@@ -7,7 +7,8 @@ https://homel.vsb.cz/~kro080/PAI-2022/U3/ukol3.html
 https://youtrack.jetbrains.com/issue/PY-52273/Debugger-multiprocessing-hangs-pycharm-2021.3
 https://youtrack.jetbrains.com/issue/PY-37366/Debugging-with-multiprocessing-managers-no-longer-working-after-update-to-2019.2-was-fine-in-2019.1#focus=Comments-27-4690501.0-0
 '''
-
+import itertools as it
+import multiprocessing as mp
 import networkx as nx
 from pprint import pprint
 import random
@@ -55,6 +56,7 @@ class Vis2D(object):
     debug_loading_divider = 10000
     debug_eval = True
     show_n_best = 3
+    load_threads_cnt = 4
 
     frameNo = 0
     min_individual_price = 0
@@ -83,27 +85,88 @@ class Vis2D(object):
 
     figsize = (10, 6)
 
-    def load_graph(s, file_path):
-        f = open(file_path)
-        count = 0
-        s.G = nx.DiGraph()
+    def split_file(s, file_path = None, cnt = 1):
+        if file_path is None:
+            return
+        f_in = open(file_path)
+        count_all_lines = 0
         while True:
-            count += 1
-
-            # Get next line from file
-            line = f.readline()
+            count_all_lines += 1
+            line = f_in.readline()
             if not line:
                 break
-            if not line.startswith('#') and len(line) > 0 and line[0].isdigit():
-                edge = line.split("	")
-                s.G.add_edge(int(edge[0]), int(edge[1]))
-            if Vis2D.debug_loading:
-                if count % Vis2D.debug_loading_divider == 0:
-                    print("Line {}: {}".format(count, line.strip()))
+        f_in.close()
 
-        # print("Line{}: {}".format(count, line.strip()))
-        f.close()
-        return s.G
+        f_in = open(file_path)
+        part_i = 0
+        part_cnt = 0
+        f_out = open(file_path + "." + str(part_i), 'ab+')
+        one_part_all_cnt = count_all_lines / cnt
+
+        while True:
+
+            if part_cnt >= one_part_all_cnt:
+                part_cnt = 0
+                f_out.close()
+                part_i = part_i + 1
+                f_out = open(file_path + "." + str(part_i))
+
+            line = f_in.readline()
+            if not line:
+                break
+            f_out.write(line)
+        f_in.close()
+        f_out.close()
+        pass
+
+
+    def load_graph(s, whole_file_path):
+
+        s.split_file(whole_file_path, s.load_threads_cnt)
+
+        for part_i in range(0, s.load_threads_cnt):
+            file_path = whole_file_path + "." + str(part_i)
+
+            # pool_size = 8
+            # # budeme pracovat ve sdilene pameti
+            # with mp.Manager() as manager:
+            #     lock = manager.Lock()
+            #     # max val and empty permutation
+            #     best_found = manager.Value('d', [max_val, []])
+            #     splitter = list(range(0, len(c) - 1))
+            #     # spustime ve vice procesech
+            #     with mp.Pool(processes=pool_size) as pool:
+            #         # kazde vlakno v poolu se stara o cast vypoctu, rozdeleno dle seznamu 'splitter'
+            #         ret = pool.starmap(paral_srflp_permutation,
+            #                            zip(it.repeat(l), it.repeat(c), splitter, it.repeat(best_found), it.repeat(lock)))
+            #     # vypsani nejlepsich reseni
+            #     print("Best Value:", best_found.value[0], "postfix permutation: ", best_found.value[1])
+            #
+            #     # ulozeni vysledku do souboru
+            #     output_file = open('1.py.res.txt', 'w')
+            #     output_file.write('Val:\n' + str(best_found.value[0]))
+            #     output_file.write('Perm:\n' +
+
+            f = open(file_path)
+            count = 0
+            s.G = nx.DiGraph()
+            while True:
+                count += 1
+
+                # Get next line from file
+                line = f.readline()
+                if not line:
+                    break
+                if not line.startswith('#') and len(line) > 0 and line[0].isdigit():
+                    edge = line.split("	")
+                    s.G.add_edge(int(edge[0]), int(edge[1]))
+                if Vis2D.debug_loading:
+                    if count % Vis2D.debug_loading_divider == 0:
+                        print("Line {}: {}".format(count, line.strip()))
+
+            # print("Line{}: {}".format(count, line.strip()))
+            f.close()
+            return s.G
 
     def __init__(s, nxgraphType=None, nxgraphOptions=None, graphData=None, graph=None, file_path=None):
         if nxgraphType is not None:
