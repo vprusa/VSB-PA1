@@ -338,18 +338,17 @@ def load_graph_part(whole_file_path, part_i):
     f.close()
     return G
 
-
 class PageRank(Vis2D):
     pass
 
 # sample data
-file_path = "web-BerkStan.cube.txt"
+# file_path = "web-BerkStan.cube.txt"
 # file_path = "web-BerkStan.one-way-cube.txt"
 # file_path = "web-BerkStan.pentagram-full.txt"
 # file_path = "web-BerkStan.pentagram-one-way.txt"
 # file_path = "web-BerkStan.pentagram-one-way-reverse.txt"
 # file_path = "web-BerkStan.pentagram-one-way-with-one-sink.txt"
-# file_path = "web-BerkStan.pentagram-one-way-with-one-sink.txt"
+file_path = "web-BerkStan.pentagram-one-way-with-one-sink.txt"
 # file_path = "web-BerkStan.txt"
 # file_path = "web-BerkStan.head_200.txt"
 # Vis2D.run_vis = True
@@ -359,7 +358,7 @@ import argparse
 parser = argparse.ArgumentParser(prog='PROG', allow_abbrev=False)
 parser.add_argument('-f', '--file_path', default=file_path, help='file_path')
 
-parser.add_argument('-v','--run_vis', default=False, help='default=max, ')
+parser.add_argument('-v', '--run_vis', default=False, type=bool, help='')
 args = parser.parse_args()
 
 pprint(args)
