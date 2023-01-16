@@ -1,0 +1,272 @@
+Namespace(file_path='web-BerkStan.head_200.txt', load_threads_cnt=1, eval_threads_cnt=1, run_vis=False, print_nodes=False)
+Used args:
+Vis2D.eval_threads_cnt 1
+Vis2D.load_threads_cnt 1
+Vis2D.run_vis False
+Vis2D.print_nodes False
+file_path web-BerkStan.head_200.txt
+Loading data from file: web-BerkStan.head_200.txt
+Setting up default graph values
+Execution time - elapsed_time_load: 0.013027429580688477 seconds
+Best nodes:
+Line 0: (2, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Line 1: (5, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Line 2: (7, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Execution time - elapsed_time_load: 0.013027429580688477 seconds
+Execution time - elapsed_time_eval: 8.918732404708862 seconds
+Execution time - elapsed_time: 8.931770086288452 seconds
+Namespace(file_path='web-BerkStan.head_200.txt', load_threads_cnt=1, eval_threads_cnt=2, run_vis=False, print_nodes=False)
+Used args:
+Vis2D.eval_threads_cnt 2
+Vis2D.load_threads_cnt 1
+Vis2D.run_vis False
+Vis2D.print_nodes False
+file_path web-BerkStan.head_200.txt
+Loading data from file: web-BerkStan.head_200.txt
+Setting up default graph values
+Execution time - elapsed_time_load: 0.014273405075073242 seconds
+Best nodes:
+Line 0: (2, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Line 1: (5, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Line 2: (7, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Execution time - elapsed_time_load: 0.014273405075073242 seconds
+Execution time - elapsed_time_eval: 12.156884908676147 seconds
+Execution time - elapsed_time: 12.17116641998291 seconds
+Namespace(file_path='web-BerkStan.head_200.txt', load_threads_cnt=1, eval_threads_cnt=4, run_vis=False, print_nodes=False)
+Used args:
+Vis2D.eval_threads_cnt 4
+Vis2D.load_threads_cnt 1
+Vis2D.run_vis False
+Vis2D.print_nodes False
+file_path web-BerkStan.head_200.txt
+Loading data from file: web-BerkStan.head_200.txt
+Setting up default graph values
+Execution time - elapsed_time_load: 0.017907381057739258 seconds
+Best nodes:
+Line 0: (2, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Line 1: (5, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Line 2: (7, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Execution time - elapsed_time_load: 0.017907381057739258 seconds
+Execution time - elapsed_time_eval: 20.42300009727478 seconds
+Execution time - elapsed_time: 20.440920114517212 seconds
+Namespace(file_path='web-BerkStan.head_200.txt', load_threads_cnt=1, eval_threads_cnt=8, run_vis=False, print_nodes=False)
+Used args:
+Vis2D.eval_threads_cnt 8
+Vis2D.load_threads_cnt 1
+Vis2D.run_vis False
+Vis2D.print_nodes False
+file_path web-BerkStan.head_200.txt
+Loading data from file: web-BerkStan.head_200.txt
+Setting up default graph values
+Execution time - elapsed_time_load: 0.017091989517211914 seconds
+Best nodes:
+Line 0: (2, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Line 1: (5, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Line 2: (7, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Execution time - elapsed_time_load: 0.017091989517211914 seconds
+Execution time - elapsed_time_eval: 48.680381298065186 seconds
+Execution time - elapsed_time: 48.69748377799988 seconds
+Namespace(file_path='web-BerkStan.head_200.txt', load_threads_cnt=2, eval_threads_cnt=1, run_vis=False, print_nodes=False)
+Used args:
+Vis2D.eval_threads_cnt 1
+Vis2D.load_threads_cnt 2
+Vis2D.run_vis False
+Vis2D.print_nodes False
+file_path web-BerkStan.head_200.txt
+Loading data from file: web-BerkStan.head_200.txt
+Setting up default graph values
+Execution time - elapsed_time_load: 0.029489994049072266 seconds
+Best nodes:
+Line 0: (2, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Line 1: (5, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Line 2: (7, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Execution time - elapsed_time_load: 0.029489994049072266 seconds
+Execution time - elapsed_time_eval: 9.175670385360718 seconds
+Execution time - elapsed_time: 9.205172777175903 seconds
+Namespace(file_path='web-BerkStan.head_200.txt', load_threads_cnt=2, eval_threads_cnt=2, run_vis=False, print_nodes=False)
+Used args:
+Vis2D.eval_threads_cnt 2
+Vis2D.load_threads_cnt 2
+Vis2D.run_vis False
+Vis2D.print_nodes False
+file_path web-BerkStan.head_200.txt
+Loading data from file: web-BerkStan.head_200.txt
+Setting up default graph values
+Execution time - elapsed_time_load: 0.01769089698791504 seconds
+Best nodes:
+Line 0: (2, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Line 1: (5, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Line 2: (7, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Execution time - elapsed_time_load: 0.01769089698791504 seconds
+Execution time - elapsed_time_eval: 12.634747743606567 seconds
+Execution time - elapsed_time: 12.652450561523438 seconds
+Namespace(file_path='web-BerkStan.head_200.txt', load_threads_cnt=2, eval_threads_cnt=4, run_vis=False, print_nodes=False)
+Used args:
+Vis2D.eval_threads_cnt 4
+Vis2D.load_threads_cnt 2
+Vis2D.run_vis False
+Vis2D.print_nodes False
+file_path web-BerkStan.head_200.txt
+Loading data from file: web-BerkStan.head_200.txt
+Setting up default graph values
+Execution time - elapsed_time_load: 0.01746678352355957 seconds
+Best nodes:
+Line 0: (2, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Line 1: (5, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Line 2: (7, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Execution time - elapsed_time_load: 0.01746678352355957 seconds
+Execution time - elapsed_time_eval: 21.614355325698853 seconds
+Execution time - elapsed_time: 21.631831884384155 seconds
+Namespace(file_path='web-BerkStan.head_200.txt', load_threads_cnt=2, eval_threads_cnt=8, run_vis=False, print_nodes=False)
+Used args:
+Vis2D.eval_threads_cnt 8
+Vis2D.load_threads_cnt 2
+Vis2D.run_vis False
+Vis2D.print_nodes False
+file_path web-BerkStan.head_200.txt
+Loading data from file: web-BerkStan.head_200.txt
+Setting up default graph values
+Execution time - elapsed_time_load: 0.018244504928588867 seconds
+Best nodes:
+Line 0: (2, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Line 1: (5, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Line 2: (7, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Execution time - elapsed_time_load: 0.018244504928588867 seconds
+Execution time - elapsed_time_eval: 38.22419834136963 seconds
+Execution time - elapsed_time: 38.24245476722717 seconds
+Namespace(file_path='web-BerkStan.head_200.txt', load_threads_cnt=4, eval_threads_cnt=1, run_vis=False, print_nodes=False)
+Used args:
+Vis2D.eval_threads_cnt 1
+Vis2D.load_threads_cnt 4
+Vis2D.run_vis False
+Vis2D.print_nodes False
+file_path web-BerkStan.head_200.txt
+Loading data from file: web-BerkStan.head_200.txt
+Setting up default graph values
+Execution time - elapsed_time_load: 0.06880378723144531 seconds
+Best nodes:
+Line 0: (2, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Line 1: (5, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Line 2: (7, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Execution time - elapsed_time_load: 0.06880378723144531 seconds
+Execution time - elapsed_time_eval: 8.642606735229492 seconds
+Execution time - elapsed_time: 8.71142053604126 seconds
+Namespace(file_path='web-BerkStan.head_200.txt', load_threads_cnt=4, eval_threads_cnt=2, run_vis=False, print_nodes=False)
+Used args:
+Vis2D.eval_threads_cnt 2
+Vis2D.load_threads_cnt 4
+Vis2D.run_vis False
+Vis2D.print_nodes False
+file_path web-BerkStan.head_200.txt
+Loading data from file: web-BerkStan.head_200.txt
+Setting up default graph values
+Execution time - elapsed_time_load: 0.02596139907836914 seconds
+Best nodes:
+Line 0: (2, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Line 1: (5, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Line 2: (7, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Execution time - elapsed_time_load: 0.02596139907836914 seconds
+Execution time - elapsed_time_eval: 12.914023876190186 seconds
+Execution time - elapsed_time: 12.939996242523193 seconds
+Namespace(file_path='web-BerkStan.head_200.txt', load_threads_cnt=4, eval_threads_cnt=4, run_vis=False, print_nodes=False)
+Used args:
+Vis2D.eval_threads_cnt 4
+Vis2D.load_threads_cnt 4
+Vis2D.run_vis False
+Vis2D.print_nodes False
+file_path web-BerkStan.head_200.txt
+Loading data from file: web-BerkStan.head_200.txt
+Setting up default graph values
+Execution time - elapsed_time_load: 0.024651050567626953 seconds
+Best nodes:
+Line 0: (2, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Line 1: (5, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Line 2: (7, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Execution time - elapsed_time_load: 0.024651050567626953 seconds
+Execution time - elapsed_time_eval: 22.076152563095093 seconds
+Execution time - elapsed_time: 22.10081195831299 seconds
+Namespace(file_path='web-BerkStan.head_200.txt', load_threads_cnt=4, eval_threads_cnt=8, run_vis=False, print_nodes=False)
+Used args:
+Vis2D.eval_threads_cnt 8
+Vis2D.load_threads_cnt 4
+Vis2D.run_vis False
+Vis2D.print_nodes False
+file_path web-BerkStan.head_200.txt
+Loading data from file: web-BerkStan.head_200.txt
+Setting up default graph values
+Execution time - elapsed_time_load: 0.026323318481445312 seconds
+Best nodes:
+Line 0: (2, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Line 1: (5, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Line 2: (7, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Execution time - elapsed_time_load: 0.026323318481445312 seconds
+Execution time - elapsed_time_eval: 41.59294366836548 seconds
+Execution time - elapsed_time: 41.619277477264404 seconds
+Namespace(file_path='web-BerkStan.head_200.txt', load_threads_cnt=8, eval_threads_cnt=1, run_vis=False, print_nodes=False)
+Used args:
+Vis2D.eval_threads_cnt 1
+Vis2D.load_threads_cnt 8
+Vis2D.run_vis False
+Vis2D.print_nodes False
+file_path web-BerkStan.head_200.txt
+Loading data from file: web-BerkStan.head_200.txt
+Setting up default graph values
+Execution time - elapsed_time_load: 0.04586005210876465 seconds
+Best nodes:
+Line 0: (2, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Line 1: (5, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Line 2: (7, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Execution time - elapsed_time_load: 0.04586005210876465 seconds
+Execution time - elapsed_time_eval: 11.228535890579224 seconds
+Execution time - elapsed_time: 11.274406671524048 seconds
+Namespace(file_path='web-BerkStan.head_200.txt', load_threads_cnt=8, eval_threads_cnt=2, run_vis=False, print_nodes=False)
+Used args:
+Vis2D.eval_threads_cnt 2
+Vis2D.load_threads_cnt 8
+Vis2D.run_vis False
+Vis2D.print_nodes False
+file_path web-BerkStan.head_200.txt
+Loading data from file: web-BerkStan.head_200.txt
+Setting up default graph values
+Execution time - elapsed_time_load: 0.05237412452697754 seconds
+Best nodes:
+Line 0: (2, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Line 1: (5, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Line 2: (7, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Execution time - elapsed_time_load: 0.05237412452697754 seconds
+Execution time - elapsed_time_eval: 19.42089533805847 seconds
+Execution time - elapsed_time: 19.47328209877014 seconds
+Namespace(file_path='web-BerkStan.head_200.txt', load_threads_cnt=8, eval_threads_cnt=4, run_vis=False, print_nodes=False)
+Used args:
+Vis2D.eval_threads_cnt 4
+Vis2D.load_threads_cnt 8
+Vis2D.run_vis False
+Vis2D.print_nodes False
+file_path web-BerkStan.head_200.txt
+Loading data from file: web-BerkStan.head_200.txt
+Setting up default graph values
+Execution time - elapsed_time_load: 0.061058759689331055 seconds
+Best nodes:
+Line 0: (2, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Line 1: (5, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Line 2: (7, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Execution time - elapsed_time_load: 0.061058759689331055 seconds
+Execution time - elapsed_time_eval: 24.32698965072632 seconds
+Execution time - elapsed_time: 24.388059616088867 seconds
+Namespace(file_path='web-BerkStan.head_200.txt', load_threads_cnt=8, eval_threads_cnt=8, run_vis=False, print_nodes=False)
+Used args:
+Vis2D.eval_threads_cnt 8
+Vis2D.load_threads_cnt 8
+Vis2D.run_vis False
+Vis2D.print_nodes False
+file_path web-BerkStan.head_200.txt
+Loading data from file: web-BerkStan.head_200.txt
+Setting up default graph values
+Execution time - elapsed_time_load: 0.04472517967224121 seconds
+Best nodes:
+Line 0: (2, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Line 1: (5, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Line 2: (7, {'cur_pr': 0.0007936507936507938, 'old_threshold': 0, 'old_pr': 0.0007936507936507938, 'cur_threshold': 0.0})
+Execution time - elapsed_time_load: 0.04472517967224121 seconds
+Execution time - elapsed_time_eval: 41.31882977485657 seconds
+Execution time - elapsed_time: 41.363564014434814 seconds
