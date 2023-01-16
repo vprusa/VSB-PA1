@@ -4,6 +4,38 @@ https://homel.vsb.cz/~kro080/PAI-2022/U3/ukol3.html
 https://youtrack.jetbrains.com/issue/PY-52273/Debugger-multiprocessing-hangs-pycharm-2021.3
 https://youtrack.jetbrains.com/issue/PY-37366/Debugging-with-multiprocessing-managers-no-longer-working-after-update-to-2019.2-was-fine-in-2019.1#focus=Comments-27-4690501.0-0
 '''
+
+
+'''
+README:
+
+Running different configuration can be done using following cmds:
+
+# all 'possibilities' 
+for il in 1 2 4 8 ; do
+for ie in 1 2 4 8 ; do
+for f in "web-BerkStan.cube.txt" "web-BerkStan.one-way-cube.txt" "web-BerkStan.pentagram-full.txt" "web-BerkStan.pentagram-one-way.txt" "web-BerkStan.pentagram-one-way-reverse.txt" "web-BerkStan.pentagram-one-way-with-one-sink.txt" "web-BerkStan.pentagram-one-way-with-one-sink.txt" ; do 
+echo $f ; 
+./venv/bin/python ./3.py --file_path $f --eval_threads_cnt $ie --load_threads_cnt $il ; 
+done ; done ; done | tee 3.perf_test.all.log
+
+
+# just web-BerkStan.head_200.txt
+
+for il in 1 2 4 8 ; do
+for ie in 1 2 4 8 ; do
+./venv/bin/python ./3.py --file_path web-BerkStan.head_200.txt --eval_threads_cnt $ie --load_threads_cnt $il ; 
+done ; done | tee 3.perf_test.head_200.log
+
+# just web-BerkStan.txt
+
+./venv/bin/python ./3.py --file_path web-BerkStan.head_200.txt --eval_threads_cnt 2 --load_threads_cnt 2 | tee 3.perf_test.recom.log
+
+
+'''
+
+import time
+
 import os
 import itertools as it
 import multiprocessing as mp
@@ -20,7 +52,6 @@ matplotlib.use("TkAgg")
 
 import networkx as nx
 from pprint import pprint
-
 
 def V(G: nx.Graph):
     return G.nodes()
@@ -47,9 +78,12 @@ class Vis2D(object):
     load_threads_cnt = 4
     # skip_splitting = True
     skip_splitting = False
+    eval_threads_cnt = 8
 
     frameNo = 0
     min_individual_price = 0
+    end_pause = 5
+    print_nodes = False
 
     frameTimeout = 0.1
     # nxgraphType = "cubical_graph"
@@ -124,21 +158,19 @@ class Vis2D(object):
         pool_size = s.load_threads_cnt
         # budeme pracovat ve sdilene pameti
         s.G = nx.DiGraph()
-        with mp.Manager() as manager:
-            lock = manager.Lock()
-            with mp.Pool(processes=pool_size) as pool:
-                # max val and empty permutation
-                # best_found = manager.Value('d', [max_val, []])
-                splitter = list(range(0, pool_size))
-                # ret = pool.starmap(s.load_graph_part, zip(it.repeat(s.G),it.repeat(s.load_threads_cnt), splitter, it.repeat(lock)))
-                ret = pool.starmap(load_graph_part, zip(it.repeat(whole_file_path), splitter))
-                # ret
+        # with mp.Manager() as manager:
+        #     lock = manager.Lock()
+        ret = []
+        with mp.Pool(processes=pool_size) as pool:
+            splitter = list(range(0, pool_size))
+            ret = pool.starmap(load_graph_part, zip(it.repeat(whole_file_path), splitter))
+            # ret
 
-                # merge subrgraphs
-                s.G = nx.DiGraph()
-                for g in ret:
-                    s.G.add_edges_from(g.edges(data=True))
-                    s.G.add_nodes_from(g.nodes(data=True))
+            # merge subrgraphs (either merge or make s.G.add_edges() critical section in paralel execution
+        s.G = nx.DiGraph()
+        for g in ret:
+            s.G.add_edges_from(g.edges(data=True))
+            s.G.add_nodes_from(g.nodes(data=True))
 
         return s.G
 
@@ -196,16 +228,22 @@ class Vis2D(object):
     d = 0.85
 
     def price(s, u):
+        '''
+        Paralelism here is in the calculation over nodes for the sum price algorithm.
+        '''
         first = (1.0 - s.d) / s.number_of_nodes
         second_sum = 0
         out_nodes = s.G.out_edges(nbunch=u[0])
-        for v in out_nodes:
-            v_node = list(filter(lambda x: x[0] == v[1], list(s.G.nodes(data=True))))[0]
-            # second_sum_div_top = s.price(v_node)
-            second_sum_div_top = v_node[1]['cur_pr']
-            second_sum_div_bottom = len(s.G.in_edges(nbunch=v_node[0]))  # in nodes
-            second_sum_div = second_sum_div_top / second_sum_div_bottom
-            second_sum = second_sum + second_sum_div
+
+        with mp.Pool(processes=s.eval_threads_cnt) as pool:
+            splitter = out_nodes
+            ret = pool.starmap(node_price, zip(it.repeat(s.G), splitter))
+            # ret
+            second_sum = sum(ret)
+
+        # no-paralelism
+        # for v in out_nodes:
+        #     second_sum = s.node_price(second_sum, v, s.G)
         total = first + s.d * second_sum
         return total
 
@@ -220,7 +258,7 @@ class Vis2D(object):
 
     def alg(s):
         """
-            Genetic alg. for solving TSP
+        Alg. for solving the problem...
         """
 
         idx = 0
@@ -231,7 +269,8 @@ class Vis2D(object):
             threshold_reached = True
 
             for i in s.G.nodes(data=True):
-                pprint(i)
+                if Vis2D.print_nodes:
+                    pprint(i)
                 new_price = s.price(i)
                 i[1]["old_pr"] = i[1]["cur_pr"]
                 i[1]["cur_pr"] = new_price
@@ -241,8 +280,9 @@ class Vis2D(object):
                 idx = idx + 1
                 s.update()
             if threshold_reached:
-                pprint(s.G.nodes(data=True))
-                pprint("threshold_reached at " + str(iters) + "")
+                if Vis2D.print_nodes:
+                    pprint(s.G.nodes(data=True))
+                    pprint("threshold_reached at " + str(iters) + "")
                 s.update()
                 break
             iters = iters + 1
@@ -254,7 +294,7 @@ class Vis2D(object):
             print("Line {}: {}".format(i, str(sorted_nodes[i])))
 
         if Vis2D.run_vis:
-            s.plt.pause(15)
+            s.plt.pause(Vis2D.end_pause)
         pass
 
     def update(s, edges=None):
@@ -270,17 +310,10 @@ class Vis2D(object):
         # s.show_axes()
 
         # Background nodes
-        pprint(s.G.edges())
+        if Vis2D.print_nodes:
+            pprint(s.G.edges())
         nx.draw_networkx_edges(s.G, pos=s.layout, edge_color="gray", arrowstyle='->', arrows=True, arrowsize=10)
-        # forestNodes = list([item for sublist in (([l[0], l[1]]) for l in edges) for item in sublist])
 
-        # dbg("forestNodes", forestNodes)
-        # forestNodes = list(filter(None, forestNodes))
-        # dbg("forestNodes -!None", forestNodes)
-        # dbg(set(self.G.nodes()))
-        # null_nodes = nx.draw_networkx_nodes(s.G, pos=s.layout, nodelist=set(s.G.nodes()) - set(forestNodes),
-        #                                     node_color="white", ax=s.ax)
-        # null_nodes = nx.draw_networkx_nodes(s.G, pos=s.layout, nodelist=set(s.G.nodes()), node_color="white", ax=s.ax)
         null_nodes = nx.draw_networkx_nodes(s.G, pos=s.layout, nodelist=set(s.G.nodes()), node_color="white")
 
         # start node highlight
@@ -331,12 +364,24 @@ def load_graph_part(whole_file_path, part_i):
             edge = line.split("	")
             # with lock:
             G.add_edge(int(edge[0]), int(edge[1]))
-        if Vis2D.debug_loading:
-            if count % Vis2D.debug_loading_divider == 0:
-                print("Part: {}, line {}: {}".format(part_i, count, line.strip()))
+        if Vis2D.print_nodes:
+            if Vis2D.debug_loading:
+                if count % Vis2D.debug_loading_divider == 0:
+                    print("Part: {}, line {}: {}".format(part_i, count, line.strip()))
 
     f.close()
     return G
+
+def node_price(G, v):
+    second_sum = 0
+    v_node = list(filter(lambda x: x[0] == v[1], list(G.nodes(data=True))))[0]
+    # second_sum_div_top = s.price(v_node)
+    second_sum_div_top = v_node[1]['cur_pr']
+    second_sum_div_bottom = len(G.in_edges(nbunch=v_node[0]))  # in nodes
+    second_sum_div = second_sum_div_top / second_sum_div_bottom
+    second_sum = second_sum + second_sum_div
+    return second_sum
+
 
 class PageRank(Vis2D):
     pass
@@ -357,13 +402,42 @@ Vis2D.run_vis = False
 import argparse
 parser = argparse.ArgumentParser(prog='PROG', allow_abbrev=False)
 parser.add_argument('-f', '--file_path', default=file_path, help='file_path')
+parser.add_argument('-l', '--load_threads_cnt', type=int, default=4, help='load_threads_cnt')
+parser.add_argument('-e', '--eval_threads_cnt', type=int, default=4, help='eval_threads_cnt')
 
-parser.add_argument('-v', '--run_vis', default=False, type=bool, help='')
+parser.add_argument('-v', '--run_vis', default=False, type=bool, help='run_vis')
+parser.add_argument('-p', '--print_nodes', default=False, type=bool, help='print_nodes')
 args = parser.parse_args()
 
 pprint(args)
+
+# eval_threads_cnt = 8
+# load_threads_cnt = 4
+Vis2D.eval_threads_cnt = args.eval_threads_cnt
+Vis2D.load_threads_cnt = args.load_threads_cnt
 Vis2D.run_vis = args.run_vis
+Vis2D.print_nodes = args.print_nodes
 file_path = args.file_path
 
+print("Used args:")
+print("Vis2D.eval_threads_cnt",Vis2D.eval_threads_cnt)
+print("Vis2D.load_threads_cnt",Vis2D.load_threads_cnt)
+print("Vis2D.run_vis",Vis2D.run_vis)
+print("Vis2D.print_nodes",Vis2D.print_nodes)
+print("file_path",file_path)
+
+st = time.time()
+st_load = time.time()
 r = PageRank(file_path=file_path)
+et_load = time.time()
+elapsed_time_load = et_load - st_load
+print('Execution time - elapsed_time_load:', elapsed_time_load, 'seconds')
+st_eval = time.time()
 r.alg()
+et_eval = time.time()
+elapsed_time_eval = et_eval - st_eval
+et = time.time()
+elapsed_time = et - st
+print('Execution time - elapsed_time_load:', elapsed_time_load, 'seconds')
+print('Execution time - elapsed_time_eval:', elapsed_time_eval, 'seconds')
+print('Execution time - elapsed_time:', elapsed_time, 'seconds')
